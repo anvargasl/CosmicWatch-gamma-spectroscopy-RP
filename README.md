@@ -4,6 +4,8 @@ This repository contains all the necesary codes to upload to the Raspberry Pi bo
 
 ## Structure
 
+led.py contains a basic example to blink the RP Pico built in LED
+
 ### headers
 
 ### source
