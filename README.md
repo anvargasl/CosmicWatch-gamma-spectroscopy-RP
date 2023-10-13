@@ -1,6 +1,6 @@
 # CosmicWatch_V3_RP
 
-This repository contains all the necesary codes to upload to the Raspberry Pi board for data acquisition, display, gps, sensor usage and others.
+This repository contains all the necesary codes to upload to the Raspberry Pi board for data acquisition, display, gps, sensor usage and others. All the code is built using [MycroPython](https://micropython.org/)
 
 ## Structure
 
