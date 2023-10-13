@@ -4,10 +4,11 @@ This repository contains all the necesary codes to upload to the Raspberry Pi bo
 
 ## Structure
 
-led.py contains a basic example to blink the RP Pico built in LED.
-OLED.py contains some example functions to display text and images on the OLED.
+**led.py** contains a basic example to blink the RP Pico built in LED.
 
-RPI_PICO-20220618-v1.19.1.uf2 contains the latest version of MicroPython that worked with the OLED library ssd1306.py. Version .20 and .21 have shown some trouble while using Thonny and ssd1306.py
+**OLED.py** contains some example functions to display text and images on the OLED while using the **ssd1306.py** library.
+
+**RPI_PICO-20220618-v1.19.1.uf2** contains the latest version of **MicroPython** that worked with the OLED library **ssd1306.py**. Version .20 and .21 have shown some trouble while using **Thonny** and **ssd1306.py**.
 
 ### headers
 
