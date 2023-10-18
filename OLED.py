@@ -11,7 +11,7 @@ font_height = 8
 margin = 5
 spacing = 2 #space between lines
 
-oled_dict = {0:{"scl":9, "sda":8}, 1:{"scl":27, "sda":26}}
+oled_dict = {0:{"scl":13, "sda":12}, 1:{"scl":27, "sda":26}}
 
 def init_i2c(Id, scl_pin, sda_pin):
     # Initialize I2C device
@@ -90,6 +90,8 @@ def display_task(Id, task):
     #global oled_dict
     i2c_dev, ident = init_i2c(Id=Id, scl_pin=oled_dict[Id]["scl"], sda_pin=oled_dict[Id]["sda"])
     oled = SSD1306_I2C(pix_res_x, pix_res_y, i2c_dev)
+    
+    oled.rotate(True)
     
     display_logo(oled)
     display_text(oled, line=0, text="Thread")
