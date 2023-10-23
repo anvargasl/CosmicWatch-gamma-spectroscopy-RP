@@ -1,8 +1,10 @@
 from machine import Pin, I2C
-from ssd1306 import SSD1306_I2C
 import framebuf, sys
 import utime
 import _thread
+
+sys.path.insert(1, r"/drivers/")
+from ssd1306 import SSD1306_I2C
 
 pix_res_x = 128
 pix_res_y = 64
@@ -11,13 +13,11 @@ font_height = 8
 margin = 5
 spacing = 2 #space between lines
 
-oled_dict = {0:{"scl":13, "sda":12}, 1:{"scl":27, "sda":26}}
-
-def init_i2c(Id, scl_pin, sda_pin):
+def init_i2c():
     # Initialize I2C device
     ident = str(_thread.get_ident())
     
-    i2c_dev = I2C(Id, scl=Pin(scl_pin), sda=Pin(sda_pin), freq=200000)
+    i2c_dev = I2C(0, scl=Pin(13), sda=Pin(12), freq=200000)
     i2c_addr = [hex(ii) for ii in i2c_dev.scan()]
     
     if not i2c_addr:
@@ -91,15 +91,12 @@ def display_counter(oled):
         counter += 2
 
 #display a timer or a even counter
-def display_task(Id, task):
-    if Id not in [0, 1]:
-        print("valid Ids are 0 or 1")
-        sys.exit()
+def display_task(task):
     if task not in ["timer", "counter"]:
         print("valid tasks are \"timer\" or \"counter\"")
         sys.exit()
     
-    i2c_dev, ident = init_i2c(Id=Id, scl_pin=oled_dict[Id]["scl"], sda_pin=oled_dict[Id]["sda"])
+    i2c_dev, ident = init_i2c()
     oled = SSD1306_I2C(pix_res_x, pix_res_y, i2c_dev)
     
     oled.rotate(False)
