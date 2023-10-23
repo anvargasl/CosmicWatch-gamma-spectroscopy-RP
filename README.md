@@ -2,12 +2,16 @@
 
 This repository contains all the necesary codes to upload to the Raspberry Pi board for data acquisition, display, gps, sensor usage and others. All the code is built using [MycroPython](https://github.com/micropython)
 
+## Libraries
+
+[Awesome MicroPython](https://awesome-micropython.com/) is a good first try to find libraries for the different components used by CosmicWatch.
+
 ## Structure
 
 ### OLED.py
 contains some example functions to display text and images on the OLED while using the [ssd1306.py](https://github.com/micropython/micropython-lib/blob/master/micropython/drivers/display/ssd1306/ssd1306.py) driver.
 
-**RPI_PICO-20220618-v1.19.1.uf2** contains the latest version of **MicroPython** that worked with the OLED library **ssd1306.py**. Version .20 and .21 have shown some trouble while using **Thonny** and **ssd1306.py**.
+**RPI_PICO_W-20231005-v1.21.0.uf2** contains the latest version of **MicroPython** used for testing the CosmicWatch with a RapberryPi Pico W. For a RaspberryPi Pico **RPI_PICO-20220618-v1.19.1.uf2**nseems to be the version that works best with the **ssd1306.py** library, versions .20 and .21 have shown some trouble while using **Thonny**.
 
 **led.py** contains a basic example to blink the RP Pico built in LED.
 

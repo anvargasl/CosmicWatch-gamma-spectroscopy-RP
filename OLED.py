@@ -3,9 +3,6 @@ import framebuf, sys
 import utime
 import _thread
 
-sys.path.insert(1, r"/drivers/")
-from ssd1306 import SSD1306_I2C
-
 pix_res_x = 128
 pix_res_y = 64
 
@@ -42,13 +39,22 @@ def display_logo(oled):
     oled.blit(fb, 0, 0) #draw
     oled.show()
     
-    utime.sleep_ms(10000)
+    start_t = utime.ticks_ms()
+    utime.sleep_ms(5000)
     oled.fill(0) #clear screen
+    
+    return start_t
 
 def display_text(oled, line, text="Raspberry Pi"):
     # Display text on the OLED
     oled.text(text, margin, margin+line*(font_height+spacing))
     #oled.text("Pico", 5, 15)
+    oled.show()
+    
+def erase_line(oled, line):
+    #draw a black box over line to be erased
+    width = pix_res_x-2*margin
+    oled.fill_rect(margin, margin+line*(font_height+spacing), width, font_height, 0)
     oled.show()
     
 def display_timer(oled):
@@ -89,30 +95,7 @@ def display_counter(oled):
         wait(1000)
         
         counter += 2
-
-#display a timer or a even counter
-def display_task(task):
-    if task not in ["timer", "counter"]:
-        print("valid tasks are \"timer\" or \"counter\"")
-        sys.exit()
-    
-    i2c_dev, ident = init_i2c()
-    oled = SSD1306_I2C(pix_res_x, pix_res_y, i2c_dev)
-    
-    oled.rotate(False)
-    
-    display_logo(oled) #Login screen
-    
-    display_text(oled, line=0, text="Thread")
-    display_text(oled, line=1, text=ident)
-    oled.rect(0,0,pix_res_x,pix_res_y,1)
-    oled.show()
-    
-    if task=="timer":
-        display_timer(oled)
-    elif task=="counter":
-        display_counter(oled)
-
+                
 #MicroPython logo
 '''
 oled.fill(0)
