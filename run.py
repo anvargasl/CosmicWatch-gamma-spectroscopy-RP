@@ -1,9 +1,11 @@
 import utime
 import _thread
-import uos, sys
+import uos, usys
 import gc  #garbage collector
+import random as rand
+import machine
 
-sys.path.insert(1, r"/drivers/")
+usys.path.insert(1, r"/drivers/")
 from ssd1306 import SSD1306_I2C
 import sdcard
 
@@ -11,57 +13,25 @@ import sdcard
 import OLED
 import sd_module
 
+#global start time
+start_t = utime.ticks_us()
+rtc = machine.RTC()
+
+#ADC pins
+sgn2 = machine.ADC(26)
+
 #buffer to save data
 buffer_size = 200
-buffer = [[[0, 0, 0, 0]]*buffer_size, [[0, 0, 0, 0]]*buffer_size]
+buffer = [[[0,0,0,0,0,0,0]]*buffer_size, [[0,0,0,0,0,0,0]]*buffer_size]
 write_in = 0
 read_from = 0
 finished = False
 
-def write_bf(sgn2, start_t, e_count, bf_id):
-    global buffer
-    global read_from
+def update_OLED(oled, timer_start_t, prev_t, new_t):
     
-    #decalre global functions
-    get_t_us = utime.ticks_us
-    get_dt = utime.ticks_diff
-    
-    b_len = buffer_size
-    b_index = 0
-    
-    print("0 is writting in bf", bf_id)
-    while b_index < b_len:
-        reading = sgn2.read_u16()
-        dt = (get_dt(get_t_us(), start_t) // 1000)
-        
-        if reading > 1:
-            e_count += 1
-            buffer[bf_id][b_index] = [e_count, dt, reading]
-            b_index += 1
-    
-    print(e_count)
-    print("0 has written to bf", bf_id)
-    return e_count
-
-def read_bf(bf_id):
-    global buffer
-    
-    print("1 is reading bf", bf_id)
-    with open("/sd/test01.txt", "a") as file:
-        write = file.write
-        for event in buffer[bf_id]:
-            data = "{}\t{}\t{}\n".format(*event)
-            write(data)
-        print("1 has read bf", bf_id)
-    
-def update_OLED(oled, start_t, prev_t, new_t):
-    #decalre global functions
-    get_t_ms = utime.ticks_ms
-    get_dt = utime.ticks_diff
-    
-    new_t = (get_dt(get_t_ms(), start_t) // 1000) + 1
+    new_t = (utime.ticks_diff(utime.ticks_us(), timer_start_t) // 1000000) + 1
             
-    if new_t > prev_t:        
+    if new_t > prev_t:
         # Erase timer line
         OLED.erase_line(oled, line=4)
             
@@ -71,29 +41,77 @@ def update_OLED(oled, start_t, prev_t, new_t):
         prev_t = new_t
     return prev_t, new_t
 
-def core0_thread():
-    global finished
-    global read_from, write_in
+def write_bf(start_t, e_count, bf_id):
+    global buffer
+    global sgn2
+    global read_from
     
     #decalre global functions
     get_t_us = utime.ticks_us
     get_dt = utime.ticks_diff
     
-    sgn2 = machine.ADC(26)
-    ident = _thread.get_ident()
+    b_len = buffer_size
+    b_index = 0
     
-    tot_cicles = 10
+    #print("0 is writting in bf", bf_id)
+    start_write_t = get_t_us()
+    
+    while b_index < b_len:
+        reading = sgn2.read_u16()
+        
+        if reading > 1:
+            e_count += 1
+            dt = (get_dt(get_t_us(), start_t) // 1000)
+            
+            timestamp = rtc.datetime()
+            timestring = "%04d-%02d-%02d %02d:%02d:%02d"%(timestamp[0:3]+timestamp[4:7])
+            
+            temp = rand.randint(0, 100)
+            dead_t = rand.randint(0, 200)
+            
+            buffer[bf_id][b_index] = [timestring, e_count, dt, reading, reading*1000, temp, dead_t]
+            b_index += 1
+    
+    #print(e_count)
+    #print("0 has written to bf", bf_id)
+    dt = (get_dt(get_t_us(), start_write_t) // 1000)
+    print("aqct [ms]:", dt)
+    return e_count
+
+def read_bf(bf_id):
+    global buffer
+    #decalre global functions
+    get_t_us = utime.ticks_us
+    get_dt = utime.ticks_diff
+    
+    #print("1 is reading bf", bf_id)
+    start_read_t = get_t_us()
+    
+    with open("/sd/test01.txt", "a") as file:
+        write = file.write
+        for event in buffer[bf_id]:
+            data = b"{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(*event)
+            write(data)
+            #usys.stdout.buffer.write(data)
+    
+    #print("1 has read bf", bf_id)
+    dt = (get_dt(get_t_us(), start_read_t) // 1000)
+    print("dt [ms]:", dt)
+
+def core0_thread():
+    global start_t
+    global finished
+    global read_from, write_in
+    
+    #ident = _thread.get_ident()
+    
+    tot_cicles = 3
     
     e_count = 0
     cicles = 0
     
-    start_t = get_t_us()
-    release_t = start_t
-    while cicles < tot_cicles:
-        #b_index = 0
-        #waitflag=0 means we just check if we are free to use the lock
-        #if lock.acquire(0):        
-        e_count = write_bf(sgn2, start_t, e_count, write_in)
+    while cicles < tot_cicles:     
+        e_count = write_bf(start_t, e_count, write_in)
         
         write_in = (write_in+1)%2
         cicles += 1
@@ -102,6 +120,7 @@ def core0_thread():
     print("0 finished")
 
 def core1_thread():
+    global start_t
     global lock
     global finished
     global read_from, write_in
@@ -109,19 +128,18 @@ def core1_thread():
     #don't erase buffer before saving
     lock.acquire()
     
-    #decalre global functions
-    get_t_ms = utime.ticks_ms
-    get_dt = utime.ticks_diff
-    
     pix_res_x = 128
     pix_res_y = 64
+    
+    #timer start time
+    #timer_start_t = start_t//1000
     
     i2c_dev, ident = OLED.init_i2c()
     oled = SSD1306_I2C(pix_res_x, pix_res_y, i2c_dev)
     
     oled.rotate(False)
     
-    start_t = OLED.display_logo(oled) #Login screen
+    OLED.display_logo(oled) #Login screen
     
     #showing elapsed time
     OLED.display_text(oled, line=0, text="Thread")
@@ -131,7 +149,7 @@ def core1_thread():
     oled.show()
     
     with open("/sd/test01.txt", "w") as file:
-        file.write("#e_count\tt[ms]\tsignal2 [0, 65535]\n")
+        file.write("Comp_date  Comp_time\tEvent\tPico_time[ms]\tADC_value[0-65535]\tSiPM[mV]\tDeadtime[ms]\n")
         
     prev_t = 0
     new_t = 0

@@ -12,17 +12,17 @@ spacing = 2 #space between lines
 
 def init_i2c():
     # Initialize I2C device
-    ident = str(_thread.get_ident())
+    ident = _thread.get_ident()
     
     i2c_dev = I2C(0, scl=Pin(13), sda=Pin(12), freq=200000)
     i2c_addr = [hex(ii) for ii in i2c_dev.scan()]
     
     if not i2c_addr:
-        print(ident+' No I2C Display Found')
+        print(str(ident)+' No I2C Display Found')
         sys.exit()
     else:
-        print(ident+" I2C Address      : {}".format(i2c_addr)+"\n")
-        print(ident+" I2C Configuration: {}".format(i2c_dev)+"\n")
+        print(str(ident)+" I2C Address      : {}".format(i2c_addr)+"\n")
+        print(str(ident)+" I2C Configuration: {}".format(i2c_dev)+"\n")
     
     return i2c_dev, ident
 
@@ -39,11 +39,9 @@ def display_logo(oled):
     oled.blit(fb, 0, 0) #draw
     oled.show()
     
-    start_t = utime.ticks_ms()
+    #start_t = utime.ticks_ms()
     utime.sleep_ms(5000)
     oled.fill(0) #clear screen
-    
-    return start_t
 
 def display_text(oled, line, text="Raspberry Pi"):
     # Display text on the OLED
