@@ -7,7 +7,7 @@ pix_res_x = 128
 pix_res_y = 64
 
 font_height = 8
-margin = 5
+margin = 2
 spacing = 2 #space between lines
 
 def init_i2c():
@@ -40,19 +40,19 @@ def display_logo(oled):
     oled.show()
     
     #start_t = utime.ticks_ms()
-    utime.sleep_ms(5000)
+    utime.sleep_ms(2000)
     oled.fill(0) #clear screen
 
-def display_text(oled, line, text="Raspberry Pi"):
+def display_text(oled, line, start=margin, text="Raspberry Pi"):
     # Display text on the OLED
-    oled.text(text, margin, margin+line*(font_height+spacing))
+    oled.text(text, start, margin+line*(font_height+spacing))
     #oled.text("Pico", 5, 15)
     oled.show()
     
-def erase_line(oled, line):
+def erase_line(oled, line, start=margin, end=pix_res_x-margin):
     #draw a black box over line to be erased
-    width = pix_res_x-2*margin
-    oled.fill_rect(margin, margin+line*(font_height+spacing), width, font_height, 0)
+    width = end-start
+    oled.fill_rect(start, margin+line*(font_height+spacing), width, font_height, 0)
     oled.show()
     
 def display_timer(oled):
@@ -68,7 +68,7 @@ def display_timer(oled):
         # Clear the specific line by drawing a filled black rectangle
         oled.fill_rect(margin, text_y, width, font_height, 0)
 
-        oled.text("Timer:", margin, text_y-font_height-spacing)
+        oled.text("Uptime:", margin, text_y-font_height-spacing)
         oled.text(str(elapsed_time) + " sec", margin, text_y)
         oled.show()
         
