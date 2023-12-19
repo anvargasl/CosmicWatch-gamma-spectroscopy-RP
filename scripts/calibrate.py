@@ -1,4 +1,5 @@
 from matplotlib import pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 import random as rn
 from scipy import interpolate
@@ -7,15 +8,16 @@ import linealization
 
 cols = 8
 
-dV = 2 #mV
-Voltages = list(range(12, 41, dV))
+dV1 = 2 #mV
+dV2 = 10 #mV
+Voltages = list(range(12, 41, dV1))+list(range(50, 151, dV2))+list(range(170, 231, dV2))
 iterations = len(Voltages)
 
 repetitions = 100
 
 tot_events = iterations*repetitions
 
-data = np.genfromtxt('../data/high_res_calibration.txt', skip_header=1, dtype="int")
+data = np.genfromtxt('../data/wide_range_calibration.txt', skip_header=1, dtype="int")
 
 max_Voltage = data.T[4].max()
 print(max_Voltage)
@@ -28,7 +30,8 @@ print(max_time)
 
 print(data)
 
-color = plt.cm.rainbow(np.linspace(0, 1, iterations))
+color = cm.rainbow(np.linspace(0, 1, iterations))
+print(color)
 a0_list = [None]*repetitions
 a1_list = [None]*repetitions
 
@@ -37,7 +40,22 @@ a1_err_list = [None]*repetitions
 
 x = np.arange(0, 140, 0.1)
 
+#get average
 A0 = [0]*iterations
+S0 = [0]*iterations
+repeat = list()
+for i in range(iterations):
+    data_sample = data.T[4][i*repetitions:(i+1)*repetitions]
+    A0[i] = np.mean(data_sample)
+    S0[i] = np.std(data_sample)
+
+    min_val = data_sample.min()
+    max_val = data_sample.max()
+
+    if min_val < A0[i]-3*S0[i] or max_val > A0[i]+3*S0[i]:
+        repeat.append(Voltages[i])
+
+print("repeat:", repeat)
 
 for i in range(iterations):
 
@@ -97,14 +115,14 @@ for i in range(iterations):
 
     plt.plot(x, y, color="black", linewidth=1.0)'''
 
-    A0[i] = sum(data.T[4][i*repetitions:(i+1)*repetitions])/repetitions
-
     #label_y_pos = (i+1)*(max_Voltage-min_Voltage)/iterations
     #print(label_y_pos)
 
     plt.text(x=max_time-2, y=A0[i], s=str(data[i*repetitions][0]), color=color[i])
 
 #plt.yscale(value="log")
+
+plt.grid()
 
 plt.xlabel("Time [us]")
 plt.ylabel("ADC reading")
@@ -121,18 +139,23 @@ def f(x):
     tck = interpolate.splrep(Voltages, A0)
     return interpolate.splev(x, tck)
 
-fit = np.polyfit(x=Voltages, y=A0, deg=3)
+S0[0] = S0[0]/1000.
+fit = np.polyfit(x=Voltages, y=A0, deg=11, w=S0)
 
 p = np.poly1d(fit)
 
-X = np.arange(min(Voltages), max(Voltages), 0.5)
+X = np.arange(0, max(Voltages), 0.5)
 Y = [p(x) for x in X]
 
-plt.scatter(Voltages, A0, c=color)
+container = plt.errorbar(Voltages, A0, yerr=S0, fmt="o", markersize=1)
+#plt.scatter(Voltages, A0, c=color)
 plt.plot(X, Y)
 
-#plt.yscale(value="log")
+plt.yscale(value="log")
 plt.xlabel("Signal Peak Voltage [mV]")
 plt.ylabel("ADC Peak amplitude")
+
+plt.ylim(bottom=1)
+plt.grid()
 
 plt.savefig("../figures/ADC_to_amplitude.pdf", bbox_inches="tight")
