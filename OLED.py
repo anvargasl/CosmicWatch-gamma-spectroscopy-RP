@@ -55,6 +55,13 @@ def erase_line(oled, line, start=margin, end=pix_res_x-margin):
     oled.fill_rect(start, margin+line*(font_height+spacing), width, font_height, 0)
     oled.show()
     
+def erase_lines(oled, lines=[0,1], start=margin, end=pix_res_x-margin):
+    #draw a black box over line to be erased
+    width = end-start
+    height = (lines[1]+1-lines[0])*(font_height+spacing)
+    oled.fill_rect(start, margin+lines[0]*(font_height+spacing), width, height, 0)
+    oled.show()
+    
 def display_timer(oled):
     # Display a simple timer animation on the OLED
     

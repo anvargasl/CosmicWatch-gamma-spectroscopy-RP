@@ -7,6 +7,7 @@ class RingbufQueue:
         self._size = len(self._q) #buffer size
         self._wi = 0 #write index
         self._ri = 0 #read index
+        self._max_q_size = 100 #biggest buffer size that can be allocated at once
         #self._evput = asyncio.Event()  # Triggered by put, tested by get
         #self._evget = asyncio.Event()  # Triggered by get, tested by put
 
@@ -44,6 +45,7 @@ class RingbufQueue:
         while self._wi == self._ri:
             sleep_ms(1000)
             v[-1] += 1000 #dead time
+            print("core 0 sleeping for 1s because empty")
             #self._ri = (self._ri + 1) % self._size  # Discard a message
             #raise IndexError  # Caller can ignore if overwrites are OK
         return v[-1]
@@ -51,7 +53,7 @@ class RingbufQueue:
     #async def put(self, val):  # Usage: await queue.put(item)
     def put(self, val):
         while self.full():  # Queue full
-            print("core 0 sleeping for 1s")
+            print("core 0 sleeping for 1s because full")
             sleep_ms(1000)
             val[-1] += 1000 #dead time
             #await self._evget.wait()  # May be >1 task waiting on ._evget
@@ -69,10 +71,18 @@ class RingbufQueue:
     def get(self, wait_routine, args):
         while self.empty():  # Empty. May be more than one task waiting on ._evput
             #await self._evput.wait()
-            wait_routine(*args)
-            print("waiting")
+            args = wait_routine(*args)
+            #print("waiting")
         t_wi = self._wi
         #r = self._q[self._ri]
+        q_size = self.qsize()
+        
+        if q_size > self._max_q_size:
+            t_wi = (self._ri+self._max_q_size) % self._size
+            print("big buffer "+str(q_size))
+        else:
+            t_wi = self._wi
+        
         r = None
         if t_wi > self._ri:
             r = self._q[self._ri:t_wi]

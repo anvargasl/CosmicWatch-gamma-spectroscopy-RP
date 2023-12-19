@@ -16,7 +16,7 @@ import sd_module
 import RingbufQueue
 
 #detector name
-name = "blue"
+name = "green"
 role = "M"
 
 #Coincidence pins
@@ -26,6 +26,8 @@ coincident_signal_output_pin = None
 
 #ADC pins
 sgn2 = machine.ADC(26)
+TriggerPin = machine.Pin(16, machine.Pin.OUT)
+TriggerResetPin = machine.Pin(21, machine.Pin.OUT)
 
 Temp = 0
 Pres = 0
@@ -40,11 +42,13 @@ pix_res_x = 128
 pix_res_y = 64
 
 #buffer to save data
-buffer_size = 200
+buffer_size = 300
 buffer = RingbufQueue.RingbufQueue(buffer_size)
-tot_events = 6000
+tot_events = 1000
 t1_e_count = 0
 rate = 0
+
+bkgd = 0
 
 finished0 = False
 finished1 = False
@@ -115,26 +119,28 @@ def CoincidentMode():
         
         coincident_pin_1.off()
 
-def update_OLED(oled, bmp, prev_t, new_t, e_count):
+def get_bkgd():
+    global bkgd
+    
+    tot_meas = 10000
+    temp = 0
+    for i in range(0,tot_meas):
+        temp += sgn2.read_u16()
+        utime.sleep_us(5)
+        
+    bkgd = temp/tot_meas
+    print("offset:", bkgd)
+
+def update_OLED(oled, bmp, e_count, prev_t, new_t):
     #global start_t
     #global oled_id
     global Temp, Pres
+    global t1_e_count
     global rate
     
     l_start = 58
     
     new_t = (utime.ticks_diff(utime.ticks_ms(), start_t) // 1000)# + 1
-    
-    if new_t > prev_t:
-        mins, sec = divmod(new_t, 60)
-        hour, mins = divmod(mins, 60)
-        uptime = '%d:%02d:%02d' % (hour, mins, sec)
-    
-        #oled.fill_rect(l_start, 2+1*(8+2), width, height, 0)
-        OLED.erase_line(oled, line=1, start=l_start)
-        OLED.display_text(oled, line=1, start=l_start, text=uptime)
-        
-        prev_t = new_t
     
     if e_count > t1_e_count:
         Temp = bmp.temperature
@@ -146,9 +152,22 @@ def update_OLED(oled, bmp, prev_t, new_t, e_count):
         OLED.display_text(oled, line=2, start=l_start, text=str(e_count))
         OLED.display_text(oled, line=3, start=l_start, text=str(Temp))
         OLED.display_text(oled, line=4, start=l_start, text=str(rate))
+        
+        t1_e_count = e_count
+
+    if new_t > prev_t:
+        mins, sec = divmod(new_t, 60)
+        hour, mins = divmod(mins, 60)
+        uptime = '%d:%02d:%02d' % (hour, mins, sec)
+    
+        #oled.fill_rect(l_start, 2+1*(8+2), width, height, 0)
+        OLED.erase_line(oled, line=1, start=l_start)
+        OLED.display_text(oled, line=1, start=l_start, text=uptime)
+        
+        prev_t = new_t
 
     oled.show()
-    return prev_t, new_t
+    return oled, bmp, e_count, prev_t, new_t
 
 def write_bf(start_t, e_count, dead_t):
     global buffer
@@ -159,12 +178,19 @@ def write_bf(start_t, e_count, dead_t):
     get_dt = utime.ticks_diff
     
     adc_val = 0
-    while adc_val < 1:
-        adc_val = sgn2.read_u16()
+    while not TriggerPin.value():
+        continue
+    
+    #while adc_val < bkgd+200:
+    adc_val = sgn2.read_u16()
+    
+    dt = get_dt(get_t_ms(), start_t)
+    
+    TriggerResetPin.on()
+    TriggerResetPin.off()
     
     b_LED.on()
     e_count += 1
-    dt = (get_dt(get_t_ms(), start_t))
     
     if dt<0:
         usys.exit()
@@ -172,7 +198,7 @@ def write_bf(start_t, e_count, dead_t):
     timestamp = rtc.datetime()
     timestring = "%04d-%02d-%02d %02d:%02d:%02d"%(timestamp[0:3]+timestamp[4:7])
     
-    deat_t = buffer.put([timestring, e_count, dt, adc_val, adc_val*1000, Temp, Pres, dead_t])
+    dead_t = buffer.put([timestring, e_count, dt, adc_val, adc_val*1000, Temp, Pres, dead_t])
     
     b_LED.off()
     return e_count, dead_t
@@ -210,11 +236,14 @@ def core0_thread():
     cicles = 0
 
     dead_t = 0
+    temp = 0
     while e_count < tot_events:     
-        e_count, dead_t = write_bf(start_t, e_count, dead_t)
-    
+        e_count, temp = write_bf(start_t, e_count, dead_t)
+        dead_t = temp
+        
     finished0 = True
     print("0 finished", e_count)
+    print("dead time ", dead_t, "ms")
 
 def core1_thread():
     global start_t
@@ -252,6 +281,7 @@ def core1_thread():
     oled.show()
     
     with open("/sd/test01.txt", "w") as file:
+        file.write(str(bkgd)+"\n")
         file.write("Comp_date  Comp_time\tEvent\tPico_time[ms]\tADC_value[0-65535]\tSiPM[mV]\tTemp[deg]\tPres[Pa]\tDeadtime[ms]\n")
     
     #decalre global functions
@@ -273,16 +303,17 @@ def core1_thread():
         #    read_bf((write_in+1)%2)
         #    read_from = write_in
         #start_read_t = get_t_ms()
-        events, wait_r_results = buffer.get(wait_routine=update_OLED, args=[oled, bmp, prev_t, new_t, e_count])
+        events, wait_r_results = buffer.get(wait_routine=update_OLED, args=[oled, bmp, e_count, prev_t, new_t])
         e_count += len(events)
-        prev_t = wait_r_results[0]
-        prev_t = wait_r_results[1]
+        prev_t = wait_r_results[-2]
+        new_t = wait_r_results[-1]
         #print(event)
         with open("/sd/test01.txt", "a") as file:
             for event in events:
                 data = b"{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(*event)
                 file.write(data)
-            
+        
+    update_OLED(oled, bmp, e_count, prev_t, new_t)
     #if finished0:
     #    print(event)
     #    print("1 finished")
@@ -316,6 +347,9 @@ vfs = uos.VfsFat(sd)
 uos.mount(vfs, "/sd")
 
 CoincidentMode()
+
+get_bkgd()
+bkgd = 1513
 
 #Core 1: timmer, buffer reader
 core1 = _thread.start_new_thread(core1_thread, [])
