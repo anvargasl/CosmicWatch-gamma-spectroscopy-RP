@@ -1,0 +1,38 @@
+{
+    "prefixes": [
+        "Ba133"
+    ],
+    "prefix_bkgd": "bkgd",
+    "peak_dict": {
+        "Ba133": {
+            "31 keV": {
+                "range": [
+                    0,
+                    3
+                ],
+                "fit_init": [
+                    0,
+                    0,
+                    1,
+                    1.87,
+                    1
+                ],
+                "fit_results": null
+            },
+            "81 keV": {
+                "range": [
+                    3,
+                    7
+                ],
+                "fit_init": [
+                    0.1,
+                    -1,
+                    0.18,
+                    6,
+                    1
+                ],
+                "fit_results": null
+            }
+        }
+    }
+}

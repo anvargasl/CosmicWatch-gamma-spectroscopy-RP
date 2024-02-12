@@ -1,0 +1,14 @@
+CPgExportLongTermMeasurement:Source:C1W1:
+VerticalScale:12.5:
+ExportType:Histogram:
+SelectedMeasurement:MG1:
+XStart:-0.136364:
+XStop:0.65415:
+YStart:0:
+YStop:125:
+Resolution:0.00790514:
+Samples:0:
+NumberOfBins:100:
+UnitHorizontalAxis:V:
+MeasurementType:Amplitude:
+Timestamp::

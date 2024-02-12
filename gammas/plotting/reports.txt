@@ -1,0 +1,194 @@
+511-Na22-live (17-30)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 49
+    # data points      = 40
+    # variables        = 5
+    chi-square         = 0.02753595
+    reduced chi-square = 7.8674e-04
+    Akaike info crit   = -281.245698
+    Bayesian info crit = -272.801301
+    R-squared          = 0.98874172
+[[Variables]]
+    a0:     0.36468341 +/- 0.02984616 (8.18%) (init = 0.3)
+    a1:    -0.00508550 +/- 0.00123740 (24.33%) (init = 0)
+    I0:     0.71258654 +/- 0.01332686 (1.87%) (init = 0.75)
+    mu:     23.2945314 +/- 0.03016177 (0.13%) (init = 22)
+    sigma:  1.41529781 +/- 0.03429811 (2.42%) (init = 1)
+
+1275-Na22-live (47-62)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 31
+    # data points      = 47
+    # variables        = 5
+    chi-square         = 0.00405607
+    reduced chi-square = 9.6573e-05
+    Akaike info crit   = -429.811320
+    Bayesian info crit = -420.560582
+    R-squared          = 0.63603694
+[[Variables]]
+    a0:     0.07359560 +/- 0.01888913 (25.67%) (init = 0.01)
+    a1:    -5.6496e-04 +/- 3.4831e-04 (61.65%) (init = 0.01)
+    I0:     0.03501694 +/- 0.00420111 (12.00%) (init = 0.03)
+    mu:     54.7987350 +/- 0.24722510 (0.45%) (init = 55)
+    sigma:  1.80549161 +/- 0.28657350 (15.87%) (init = 2)
+
+662-Cs137-live (23-35)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 31
+    # data points      = 28
+    # variables        = 5
+    chi-square         = 0.00163780
+    reduced chi-square = 7.1209e-05
+    Akaike info crit   = -262.904971
+    Bayesian info crit = -256.243948
+    R-squared          = 0.99570719
+[[Variables]]
+    a0:     0.12763379 +/- 0.01523864 (11.94%) (init = 0.12)
+    a1:    -2.5711e-04 +/- 5.0273e-04 (195.53%) (init = -0.01)
+    I0:     0.32925666 +/- 0.00454106 (1.38%) (init = 0.3)
+    mu:     28.4400839 +/- 0.02712342 (0.10%) (init = 28)
+    sigma:  1.72049091 +/- 0.03293121 (1.91%) (init = 1.7)
+
+Calibration [511, 662, 1274.5]
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 7
+    # data points      = 3
+    # variables        = 2
+    chi-square         = 400.532859
+    reduced chi-square = 400.532859
+    Akaike info crit   = 18.6825506
+    Bayesian info crit = 16.8797751
+    R-squared          = 0.99877499
+[[Variables]]
+    a0: -33.2140528 +/- 31.9011039 (96.05%) (init = -33)
+    a1:  23.9093406 +/- 0.83734307 (3.50%) (init = 23)
+
+../data/spectra/Na22-live-spectrum.txt
+Na22-live 511 keV [17, 30]
+[[Model]]
+    Model(Gauss_plus_bkgd)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 31
+    # data points      = 30
+    # variables        = 5
+    chi-square         = 0.00244521
+    reduced chi-square = 9.7808e-05
+    Akaike info crit   = -272.444621
+    Bayesian info crit = -265.438634
+    R-squared          = 0.98704315
+[[Variables]]
+    a0:     0.12213897 +/- 0.01182392 (9.68%) (init = 0.3646834)
+    a1:    -0.00180440 +/- 4.8877e-04 (27.09%) (init = -0.0050855)
+    I0:     0.22898185 +/- 0.00546691 (2.39%) (init = 0.7125865)
+    mu:     23.2955406 +/- 0.03870977 (0.17%) (init = 23.29453)
+    sigma:  1.42362880 +/- 0.04385588 (3.08%) (init = 1.415298)
+
+../data/spectra/Na22-live-spectrum.txt
+Na22-live 1275 keV [47, 62]
+[[Model]]
+    Model(Gauss_plus_bkgd)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 61
+    # data points      = 35
+    # variables        = 5
+    chi-square         = 2.7332e-04
+    reduced chi-square = 9.1108e-06
+    Akaike info crit   = -401.606972
+    Bayesian info crit = -393.830232
+    R-squared          = 0.66069937
+[[Variables]]
+    a0:     0.02789447 +/- 0.00652816 (23.40%) (init = 0.0735956)
+    a1:    -2.5247e-04 +/- 1.2153e-04 (48.13%) (init = -0.00056496)
+    I0:     0.01115573 +/- 0.00151977 (13.62%) (init = 0.03501694)
+    mu:     54.8667084 +/- 0.27313790 (0.50%) (init = 54.79874)
+    sigma:  1.76099039 +/- 0.31490988 (17.88%) (init = 1.805492)
+
+../data/spectra/Cs137-live-spectrum.txt
+Cs137-live 32 keV [1, 5]
+[[Model]]
+    Model(Gauss_plus_bkgd)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 13
+    # data points      = 10
+    # variables        = 5
+    chi-square         = 0.00282811
+    reduced chi-square = 5.6562e-04
+    Akaike info crit   = -71.7073073
+    Bayesian info crit = -70.1943818
+    R-squared          = 0.99712835
+[[Variables]]
+    a0:    -0.07056289 +/- 0.02406565 (34.11%) (init = -0.0705629)
+    a1:     0.09846298 +/- 0.00663508 (6.74%) (init = 0.09846298)
+    I0:     0.83199804 +/- 0.02133552 (2.56%) (init = 0.831998)
+    mu:     2.61880537 +/- 0.01818853 (0.69%) (init = 2.618805)
+    sigma:  0.61879073 +/- 0.02206742 (3.57%) (init = 0.6187908)
+
+../data/spectra/Cs137-live-spectrum.txt
+Cs137-live 184 keV [5, 15]
+[[Model]]
+    Model(Gauss_plus_bkgd)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 7
+    # data points      = 23
+    # variables        = 5
+    chi-square         = 0.00281047
+    reduced chi-square = 1.5614e-04
+    Akaike info crit   = -197.227666
+    Bayesian info crit = -191.550195
+    R-squared          = 0.94691150
+[[Variables]]
+    a0:     0.40702410 +/- 0.01416682 (3.48%) (init = 0.4070242)
+    a1:    -0.00646744 +/- 0.00112459 (17.39%) (init = -0.00646744)
+    I0:     0.10826157 +/- 0.00770777 (7.12%) (init = 0.1082616)
+    mu:     9.01075936 +/- 0.12155764 (1.35%) (init = 9.01076)
+    sigma:  1.52552980 +/- 0.15530760 (10.18%) (init = 1.525529)
+
+../data/spectra/Cs137-live-spectrum.txt
+Cs137-live 662 keV [23, 35]
+[[Model]]
+    Model(Gauss_plus_bkgd)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 7
+    # data points      = 28
+    # variables        = 5
+    chi-square         = 0.00163779
+    reduced chi-square = 7.1208e-05
+    Akaike info crit   = -262.905101
+    Bayesian info crit = -256.244079
+    R-squared          = 0.99570722
+[[Variables]]
+    a0:     0.12763348 +/- 0.01523863 (11.94%) (init = 0.1276338)
+    a1:    -2.5710e-04 +/- 5.0273e-04 (195.54%) (init = -0.00025711)
+    I0:     0.32925678 +/- 0.00454105 (1.38%) (init = 0.3292567)
+    mu:     28.4400827 +/- 0.02712340 (0.10%) (init = 28.44008)
+    sigma:  1.72048971 +/- 0.03293120 (1.91%) (init = 1.720491)
+
+../data/spectra/Cs137-live-spectrum.txt
+Cs137-live extra [40, 60]
+[[Model]]
+    Model(Gauss_plus_bkgd)
+[[Fit Statistics]]
+    # fitting method   = leastsq
+    # function evals   = 55
+    # data points      = 45
+    # variables        = 5
+    chi-square         = 0.00217926
+    reduced chi-square = 5.4481e-05
+    Akaike info crit   = -437.094476
+    Bayesian info crit = -428.061164
+    R-squared          = 0.97276101
+[[Variables]]
+    a0:     0.26724694 +/- 0.01101500 (4.12%) (init = 0.4)
+    a1:    -0.00467778 +/- 2.3279e-04 (4.98%) (init = -0.1)
+    I0:     0.10667776 +/- 0.00321061 (3.01%) (init = 0.15)
+    mu:     51.0058591 +/- 0.09654932 (0.19%) (init = 53)
+    sigma:  2.84233132 +/- 0.12075480 (4.25%) (init = 2)
