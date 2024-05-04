@@ -2,7 +2,7 @@ import numpy as np
 
 class Histogram(object):
 
-	def __init__(self, name, bin_size, bin_edges=np.empty([1,1]), freq=np.empty([1,1]), f_name=None):
+	def __init__(self, name=None, bin_size=None, bin_edges=np.empty([1,1]), freq=np.empty([1,1]), f_name=None):
 		if f_name == None:
 			self.name = name
 			self.bin_centers = 0.5*(bin_edges[:-1] + bin_edges[1:])
@@ -63,25 +63,28 @@ class Histogram(object):
 			self.normalize()
 
 		#relative error at fmax bin
-		self.fmax_err = np.sqrt(self.fmax)/self.fmax
+		self.fmax_err = np.sqrt(self.fmax)
 
 		#relative error at each bin
-		self.freq_err = [np.sqrt(f)/f if f>0 else 0 for f in self.freq]
+		self.freq_err = [np.sqrt(f) if f>0 else 0 for f in self.freq]
 
 		#frequencies error in the normalized histogram
 		self.norm_freq_err = [0]*self.nbins
-		dN = self.norm_value_err/self.norm_value
+		dN2 = (self.norm_value_err/self.norm_value)**2
 		for j in range(self.nbins):
 			if self.freq_err[j] != 0:
 				df = self.freq_err[j]/self.freq[j]
-				self.norm_freq_err[j] = self.norm_freq[j]*np.sqrt(df**2 + dN**2)
+				self.norm_freq_err[j] = self.norm_freq[j]*np.sqrt(df**2 + dN2)
 
 		#self.mean_err = round(self.sigma/np.sqrt(self.nbins), 2)
 
 	def print_hist(self, f_name=None):
-		parameters = [str(self.name), str(self.fmax), str(self.norm_value), 
-						str(self.bin_size), str(self.fmax_err), str(self.norm_value_err)]
-		header = " ".join(str(p) for p in parameters)
+		parameters = [str(self.name), str(self.bin_size), str(self.fmax), str(self.fmax_err), str(self.norm_value), str(self.norm_value_err)]
+		
+		values_label = "name, dx, fmax, fmax_err, norm_value, norm_vale_err\n"
+		values = " ".join(str(p) for p in parameters)+"\n"
+		columns_label = "bin_center, freq, freq_err, norm_freq, norm_freq_err"
+		header = values_label+values+columns_label
 
 		data = np.array([self.bin_centers, self.freq, self.freq_err, self.norm_freq, self.norm_freq_err]).T
 
@@ -95,10 +98,14 @@ class Histogram(object):
 		self.bin_centers, self.freq, self.freq_err, self.norm_freq, self.norm_freq_err = np.genfromtxt(f_name, dtype=None, unpack=True)
 		
 		#read parameters
+		stuff = None
 		with open(f_name, 'r') as f_handle:
-			stuff = f_handle.readline()[2:].split()
+			for i, line in enumerate(f_handle):
+				if i == 0:
+					stuff = f_handle.readline()[2:].split()
 
-		self.name = stuff[0]
 		self.nbins = len(self.bin_centers)
-		self.fmax, self.norm_value = [int(s) for s in stuff[1:3]]
-		self.bin_size, self.fmax_err, self.norm_value_err = [float(s) for s in stuff[3:]]
+		self.name = stuff[0]
+		self.bin_size = int(stuff[1])
+		self.fmax, self.norm_value = [int(s) for s in (stuff[2], stuff[4])]
+		self.fmax_err, self.norm_value_err = [float(s) for s in (stuff[3], stuff[5])]

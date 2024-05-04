@@ -18,8 +18,10 @@ import json
 #file where the Histogram class is defined
 import histogram_class as hmc
 
-folder = 'october-13-2023-high-energies/'
-with open("../data/"+folder+"calibration.json", "r") as infile:
+spectra_folder = "spectra/"
+data_folder = "2024-04-30/"
+
+with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
 
 #list of isotopes
@@ -28,7 +30,8 @@ prefixes = calibration["prefixes"]
 prefix_bkgd = calibration["prefix_bkgd"]
 
 material = "teflon"
-config = material+"-side"
+#config = material+"-side"
+config = ""
 
 #list of matplotlib colors
 color_list = list(mpl.colors.TABLEAU_COLORS.keys())
@@ -40,84 +43,93 @@ from fitting import Fit_Gauss_plus_bkgd
 
 fig, ax = plt.subplots()
 
-fit = input("fit? [y,n]")
+#fit = input("fit? [y,n]")
+fit = "y"
 for prefix in prefixes:
-	fname = '../data/'+folder+'spectra/'+config+'-'+prefix+'-spectrum.txt'
+	fname = '../data/'+data_folder+spectra_folder+config+prefix+'_spectrum.txt'
 	spectrum = hmc.Histogram(f_name=fname)
 
 	#normalized histogram
 	plt.step(spectrum.bin_centers, spectrum.norm_freq, where='mid', label=prefix, color=color_tab[prefix])
 	#error bars in event count
-	plt.fill_between(spectrum.bin_centers, spectrum.norm_freq-spectrum.norm_freq_err, spectrum.norm_freq+spectrum.norm_freq_err, step='mid', alpha=0.5, color=color_tab[prefix])
+	#plt.fill_between(spectrum.bin_centers, spectrum.norm_freq-spectrum.norm_freq_err, spectrum.norm_freq+spectrum.norm_freq_err, step='mid', alpha=0.5, color=color_tab[prefix])
 
 	#----------fitting----------#
 	if fit == "y":
 		for peak in list(calibration["peak_dict"][prefix].keys()):
 
-			idxmin = int((calibration["peak_dict"][prefix][peak]["range"][0]-spectrum.bin_centers[0])/(spectrum.bin_size))
-			idxmax = int((calibration["peak_dict"][prefix][peak]["range"][1]-spectrum.bin_centers[0])/(spectrum.bin_size))+1
+			if calibration["peak_dict"][prefix][peak]["fit?"]:
 
-			xFit = spectrum.bin_centers[idxmin:idxmax]
-			yFit = spectrum.norm_freq[idxmin:idxmax]
+				idxmin = int((calibration["peak_dict"][prefix][peak]["range"][0]-spectrum.bin_centers[0])/(spectrum.bin_size))
+				idxmax = int((calibration["peak_dict"][prefix][peak]["range"][1]-spectrum.bin_centers[0])/(spectrum.bin_size))+1
 
-			result = Fit_Gauss_plus_bkgd(x=xFit, y=yFit, parameters=list(calibration["peak_dict"][prefix][peak]["fit_init"].values()))
+				xFit = spectrum.bin_centers[idxmin:idxmax]
+				yFit = spectrum.norm_freq[idxmin:idxmax]
 
-			mu = result.params['mu'].value
-			mu_err = result.params['mu'].stderr
+				result = Fit_Gauss_plus_bkgd(x=xFit, y=yFit, parameters=list(calibration["peak_dict"][prefix][peak]["fit_init"].values()))
 
-			print('\n'+fname)
-			print(prefix, peak, calibration["peak_dict"][prefix][peak]["range"])
+				mu = result.params['mu'].value
+				mu_err = result.params['mu'].stderr
 
-			print(result.fit_report())
+				print('\n'+fname)
+				print(prefix, peak, calibration["peak_dict"][prefix][peak]["range"])
 
-			#fit
-			if len(prefixes)==1:
-				label = r'$\mu=$'+str(round(mu,2))+'$\pm$'+str(round(mu_err,2))
-			else:
-				label = None
-			plt.plot(xFit, result.best_fit, '-', label=label, color=fit_tab[prefix])
-			#if peak == '662 keV' or peak == 'extra':
-			#	plt.axvline(mu, color=fit_tab[prefix], ymin=0.0, ymax=1.0, ls='--')
-		
-			result_list = json.loads(result.params.dumps())["params"]
-			total_params = len(result_list)
-			names = [result_list[i][0] for i in range(total_params)]
-			values = [result_list[i][1] for i in range(total_params)]
-			stderrs = [result_list[i][7] for i in range(total_params)]
+				print(result.fit_report())
 
-			calibration["peak_dict"][prefix][peak]["fit_results"] = {n:[v, s] for n, v, s in zip(names, values, stderrs)}
+				#fit
+				if len(prefixes)==1:
+					label = r'$\mu=$'+str(round(mu,2))+'$\pm$'+str(round(mu_err,2))
+				else:
+					label = None
+				plt.plot(xFit, result.best_fit, '-', label=label, color=fit_tab[prefix])
+				#if peak == '662 keV' or peak == 'extra':
+				#	plt.axvline(mu, color=fit_tab[prefix], ymin=0.0, ymax=1.0, ls='--')
+			
+				result_list = json.loads(result.params.dumps())["params"]
+				total_params = len(result_list)
+				names = [result_list[i][0] for i in range(total_params)]
+				values = [result_list[i][1] for i in range(total_params)]
+				stderrs = [result_list[i][7] for i in range(total_params)]
+
+				calibration["peak_dict"][prefix][peak]["fit_results"] = {n:[v, s] for n, v, s in zip(names, values, stderrs)}
+				
 	elif fit == "n":
 		continue
 	else:
 		print("valid options are \"y\" or \"n\", not fitting.")
 
 #plot background
-spectrum_bkgd = hmc.Histogram(f_name='../data/'+folder+'spectra/'+material+'-bkgd-spectrum.txt')
+spectrum_bkgd = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+config+prefix_bkgd+'_spectrum.txt')
 
 color_bkgd = color_list[len(prefixes)]
-plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
-plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
+#plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
+#plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
 
-with open("../data/"+folder+"calibration.json", "w") as outfile: 
+with open("../data/"+data_folder+spectra_folder+"calibration.json", "w") as outfile: 
     json.dump(calibration, outfile, indent=4)
 
-major_x = np.arange(0, 101, 50)
-minor_x = np.arange(0, 101, 10)
+xmin = spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
+xmax = spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
+grid_size = (spectrum_bkgd.bin_centers[-1]-spectrum_bkgd.bin_centers[0])/10
+
+major_x = np.arange(xmin, xmax, int(grid_size))
+#minor_x = np.arange(xmin, xmax, 10)
 ax.set_xticks(major_x)
-ax.set_xticks(minor_x, minor=True)
+#ax.set_xticks(minor_x, minor=True)
 
 #ax.set_xlim(right=50)
 
 ax.grid(which='both', axis='both')
-ax.grid(which='minor', axis='both', alpha=0.3)
+#ax.grid(which='minor', axis='both', alpha=0.3)
 
-plt.xlabel(r'SiPM pulse area [nV$/$s]')
+#plt.xlabel(r'SiPM pulse area [nV$/$s]')
+plt.xlabel(r'channel')
 plt.ylabel(r'$I/I_{max}$')
 
 plt.legend()
 
 if len(prefixes)==1:
-	plt.savefig('../figures/Waveform_histograms/'+folder+config+'-'+prefix+'-areas.pdf', bbox_inches="tight")
+	plt.savefig('../figures/'+data_folder+config+prefix+'.pdf', bbox_inches="tight")
 else:
 	plt.yscale(value="log")
-	plt.savefig('../figures/Waveform_histograms/'+folder+config+'-areas.pdf', bbox_inches="tight")
+	plt.savefig('../figures/'+data_folder+config+'All_isotopes.pdf', bbox_inches="tight")

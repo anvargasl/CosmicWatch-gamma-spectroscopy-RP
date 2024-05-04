@@ -1,94 +1,78 @@
+import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 #file where the Histogram class is defined
 import histogram_class as hmc
 
-prefixes = ['Na22-live', 'Cs137-live']
-prefix_bkgd = 'bkgd-live'
+spectra_folder = "spectra/"
+data_folder = "2024-04-30/"
 
-#read background
-maxvalues_bkgd = np.genfromtxt('../data/Waveform_histories/Waveform_data/'+prefix_bkgd+'-amplitudes.txt', dtype=float, skip_header=1)
-areas_bkgd= np.genfromtxt('../data/Waveform_histories/Waveform_data/'+prefix_bkgd+'-areas.txt', dtype=float, skip_header=1)
+erase_bkgd = 0 #0: do not erase, 1: erase
 
-#read data
-maxvalues = {prefix: np.array([0]) for prefix in prefixes}
-areas = {prefix: np.array([0]) for prefix in prefixes}
+with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
+    calibration = json.load(infile)
 
-#erasing 0 areas and maxvalues.
-maxvalues_bkgd[maxvalues_bkgd == 0] = np.nan
-maxvalues_bkgd = maxvalues_bkgd[~np.isnan(maxvalues_bkgd)]
-areas_bkgd[areas_bkgd == 0] = np.nan
-areas_bkgd = areas_bkgd[~np.isnan(areas_bkgd)]
-
-max_maxvalue = 0
-max_area = 0
-
-min_maxvalue = 0
-min_area = 0
+#list of isotopes
+prefixes = calibration["prefixes"]
+#"name" of background file
+prefix_bkgd = calibration["prefix_bkgd"]
 
 #----------read data----------#
+data_bkgd = np.genfromtxt('../data/'+data_folder+'2024-04-30_'+prefix_bkgd+'_test_600s.txt', dtype=(int, int), usecols=[0,2], skip_header=1).T
+
+data = {prefix: np.array([0]) for prefix in prefixes}
+
+max_freq = 0
+idx_max_freq = None
+min_freq = 0
+
 for prefix in prefixes:
-	maxvalues[prefix] = np.genfromtxt('../data/Waveform_histories/Waveform_data/'+prefix+'-amplitudes.txt', dtype=float, skip_header=1)
-	areas[prefix] = np.genfromtxt('../data/Waveform_histories/Waveform_data/'+prefix+'-areas.txt', dtype=float, skip_header=1)
-	#areas = np.concatenate((areas, temp))
+	data[prefix] = np.genfromtxt('../data/'+data_folder+'2024-04-30_'+prefix+'_test_600s.txt', dtype=(int, int), usecols=[0,2], skip_header=1).T
 
-	#erasing 0 areas and maxvalues.
-	maxvalues[prefix][maxvalues[prefix] == 0] = np.nan
-	maxvalues[prefix] = maxvalues[prefix][~np.isnan(maxvalues[prefix])]
-	areas[prefix][areas[prefix] == 0] = np.nan
-	areas[prefix] = areas[prefix][~np.isnan(areas[prefix])]
-	#areas[areas == 0] = np.nan
-	#areas = areas[~np.isnan(areas)]
+	temp = data[prefix][1].max()
+	if max_freq < temp:
+		max_freq = temp
+		idx_max_freq = np.argmax(data[prefix][1])
+	temp = data[prefix][1].min()
+	if min_freq > temp:
+		min_freq = temp
 
-	temp = maxvalues[prefix].max()
-	if max_maxvalue < temp:
-		max_maxvalue = temp
-	temp = areas[prefix].max()
-	if max_area < temp:
-		max_area = temp
-	temp = maxvalues[prefix].min()
-	if min_maxvalue > temp:
-		min_maxvalue = temp
-	temp = areas[prefix].min()
-	if min_area > temp:
-		min_area = temp
+if erase_bkgd:
+	max_freq = max_freq-data_bkgd[1][idx_max_freq]
 
-print(min_area)
-print(max_area)
+print(data['22Na'])
 
 #----------crate histogram----------#
-dx = (max_area-min_area)/300
-print('resolution =', dx*1e9, 'nV/s')
-bins = np.arange(min_area, max_area+(dx/2), dx)
+#dx = (max_freq-min_freq)/300
+dx = 1
+#bins = np.arange(min_area, max_area+(dx/2), dx)
 
-bin_edges = bins*1e9
+bin_edges = data[prefixes[0]][0]-dx
+bin_edges = np.append(bin_edges, bin_edges[-1]+dx)
 
-spectrums = {p:None for p in prefixes}
-max_freq_area = 0
-
-freq_bkgd, _ = np.histogram(areas_bkgd, bins=bins, density=None, weights=None)
-
-for prefix in prefixes:
-	freq, _ = np.histogram(areas[prefix], bins=bins, density=None, weights=None)
-
-	spectrums[prefix] = hmc.Histogram(prefix, dx*1e9, bin_edges, freq-freq_bkgd)
-	
-	#find maximum frequency to normalize
-	temp = spectrums[prefix].freq.max()
-	if max_freq_area < temp:
-		max_freq_area = temp
-
-spectrum_bkgd = hmc.Histogram(prefix_bkgd, dx*1e9, bin_edges, freq_bkgd)
-spectrum_bkgd.normalize(max_freq_area, np.sqrt(max_freq_area))
+spectrum_bkgd = hmc.Histogram(prefix_bkgd, dx, bin_edges, data_bkgd[1])
+spectrum_bkgd.normalize(max_freq, np.sqrt(max_freq))
 
 spectrum_bkgd.getErrors()
-spectrum_bkgd.print_hist(f_name='../data/Waveform_histories/spectra/'+prefix_bkgd+'-spectrum.txt')
+spectrum_bkgd.print_hist(f_name='../data/'+data_folder+spectra_folder+prefix_bkgd+'_spectrum.txt')
+
+plt.plot(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, label=prefix_bkgd)
+
+spectrums = {p:None for p in prefixes}
 
 for prefix in prefixes:
+	spectrums[prefix] = hmc.Histogram(prefix, dx, bin_edges, data[prefix][1]-erase_bkgd*data_bkgd[1])
+	
 	#----------statistics----------#
-	spectrums[prefix].normalize(max_freq_area, np.sqrt(max_freq_area))
+	spectrums[prefix].normalize(max_freq, np.sqrt(max_freq))
 
-	#spectrums[prefix].getMean()
-	#spectrums[prefix].getSigma()
 	spectrums[prefix].getErrors()
-	spectrums[prefix].print_hist(f_name='../data/Waveform_histories/spectra/'+prefix+'-spectrum.txt')
+	spectrums[prefix].print_hist(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
+
+	plt.plot(spectrums[prefix].bin_centers, spectrums[prefix].norm_freq, label=prefix)
+
+plt.legend()
+
+plt.yscale(value='log')
+plt.show()
