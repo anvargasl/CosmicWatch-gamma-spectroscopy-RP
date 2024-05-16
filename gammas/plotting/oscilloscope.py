@@ -6,8 +6,9 @@ import re
 #file where the Histogram class is defined
 import histogram_class as hmc
 
-folder = 'october-13-2023-high-energies/'
-with open("../data/"+folder+"calibration.json", "r") as infile:
+spectra_folder = "spectra/"
+data_folder = 'october-13-2023-high-energies/'
+with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
 
 #list of isotopes
@@ -19,7 +20,7 @@ prefix_bkgd = calibration["prefix_bkgd"]
 material = 'teflon'
 config = material+'-side'
 
-setup_file = '../data/'+folder+material+'-'+prefix_bkgd+'-20min-october-13-2023.csv'
+setup_file = '../data/'+data_folder+material+'-'+prefix_bkgd+'-20min-october-13-2023.csv'
 
 XStart = None
 XStop = None
@@ -56,11 +57,11 @@ dFrames = list()
 spectrums = {p:None for p in prefixes}
 max_freq_area = 0
 
-freq_bkgd = np.genfromtxt('../data/'+folder+material+'-'+prefix_bkgd+'-20min-october-13-2023.Wfm.csv', dtype=int)
+freq_bkgd = np.genfromtxt('../data/'+data_folder+material+'-'+prefix_bkgd+'-20min-october-13-2023.Wfm.csv', dtype=int)
 print(len(freq_bkgd))
 
 for prefix in prefixes:
-	freq = np.genfromtxt('../data/'+folder+config+'-'+prefix+'-20min-october-13-2023.Wfm.csv', dtype=int)
+	freq = np.genfromtxt('../data/'+data_folder+config+'-'+prefix+'-20min-october-13-2023.Wfm.csv', dtype=int)
 	print("not substracting background")
 	spectrums[prefix] = hmc.Histogram(prefix, Resolution, bin_edges, freq)
 
@@ -73,7 +74,7 @@ spectrum_bkgd = hmc.Histogram(prefix_bkgd, Resolution, bin_edges, freq_bkgd)
 spectrum_bkgd.normalize(max_freq_area, np.sqrt(max_freq_area))
 
 spectrum_bkgd.getErrors()
-spectrum_bkgd.print_hist(f_name='../data/'+folder+'spectra/'+material+'-'+prefix_bkgd+'-spectrum.txt')
+spectrum_bkgd.print_hist(f_name='../data/'+data_folder+'spectra/'+material+'-'+prefix_bkgd+'_spectrum.txt')
 
 for prefix in prefixes:
 	#----------statistics----------#
@@ -82,4 +83,4 @@ for prefix in prefixes:
 	#spectrums[prefix].getMean()
 	#spectrums[prefix].getSigma()
 	spectrums[prefix].getErrors()
-	spectrums[prefix].print_hist(f_name='../data/'+folder+'spectra/'+config+'-'+prefix+'-spectrum.txt')
+	spectrums[prefix].print_hist(f_name='../data/'+data_folder+'spectra/'+config+'-'+prefix+'_spectrum.txt')

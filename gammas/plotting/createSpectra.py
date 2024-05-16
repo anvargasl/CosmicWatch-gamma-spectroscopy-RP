@@ -6,7 +6,7 @@ import json
 import histogram_class as hmc
 
 spectra_folder = "spectra/"
-data_folder = "2024-04-30/"
+data_folder = "october-13-2023-high-energies/"
 
 erase_bkgd = 0 #0: do not erase, 1: erase
 

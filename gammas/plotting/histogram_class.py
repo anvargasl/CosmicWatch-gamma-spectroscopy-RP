@@ -106,6 +106,6 @@ class Histogram(object):
 
 		self.nbins = len(self.bin_centers)
 		self.name = stuff[0]
-		self.bin_size = int(stuff[1])
+		self.bin_size = float(stuff[1])
 		self.fmax, self.norm_value = [int(s) for s in (stuff[2], stuff[4])]
 		self.fmax_err, self.norm_value_err = [float(s) for s in (stuff[3], stuff[5])]
