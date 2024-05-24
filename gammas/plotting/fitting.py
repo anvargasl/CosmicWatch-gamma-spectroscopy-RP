@@ -37,6 +37,19 @@ def Fit_Line(x, y, parameters=None):
 
 	return lineModel.fit(y, x=x, params=lineParams)
 
+def square_root(x, s0, s1):
+	return s0 + s1*np.sqrt(x)
+
+sqrtModel = Model(square_root)
+sqrtParams = sqrtModel.make_params()
+
+def Fit_sqrt(x, y, parameters=None):
+	if parameters!=None:
+		sqrtParams.add('s0', value=parameters[0], vary=True)
+		sqrtParams.add('s1', value=parameters[1], vary=True)
+
+	return sqrtModel.fit(y, x=x, params=sqrtParams)
+
 '''print(result.fit_report())
 print(result.params)
 print(result.params['I0'].value)

@@ -7,7 +7,7 @@ def my_uncertainty(a, a_std):
     if a_exp<0:
         a_rd = round(a, -a_exp)
     elif a_exp>0:
-        a_rd = int(round(a, -a_exp))
+        a_rd = int(round(a, -a_exp+1))
     else:
         a_rd = round(a)
 

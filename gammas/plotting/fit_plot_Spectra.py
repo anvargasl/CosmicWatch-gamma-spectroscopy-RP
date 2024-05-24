@@ -30,20 +30,17 @@ prefixes = calibration["prefixes"]
 #"name" of background file
 prefix_bkgd = calibration["prefix_bkgd"]
 
-material = "teflon"
-#config = material+"-side"
-config = "teflon-side-"
-config_bkgd = "teflon-"
+#plotting colors
+colors = calibration["colors"]
+fit_colors = calibration["fit_colors"]
 
-#list of matplotlib colors
-color_list = list(mpl.colors.TABLEAU_COLORS.keys())
-color_bkgd = color_list[-1]
-color_tab = {p:c for (p,c) in zip(prefixes,color_list[0:len(prefixes)])}
-print(color_tab)
-color_tab = {'Co60': 'tab:blue', 'Na22': 'tab:orange', 'Cs137': 'tab:green'}
-fit_tab = {p:c for (p,c) in zip(prefixes,color_list[len(prefixes):2*len(prefixes)])}
-print(fit_tab)
-fit_tab = {'Co60': 'tab:red', 'Na22': 'tab:purple', 'Cs137': 'tab:brown'}
+color_bkgd = calibration["color_bkgd"]
+
+config = "teflon-side-" #Ba133-october-12-2023
+config_bkgd = "teflon-" #Ba133-october-12-2023
+
+#config = "" #2024-04-30, 2024-05-22
+#config_bkgd = "" #2024-04-30, 2024-05-22
 
 #read background data
 spectrum_bkgd = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+config_bkgd+prefix_bkgd+'_spectrum.txt')
@@ -66,9 +63,9 @@ for p, prefix in enumerate(prefixes):
 	plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
 	#plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
 	#normalized histogram
-	plt.step(spectrum.bin_centers, spectrum.norm_freq, where='mid', label=r"{}".format(calibration["names"][prefix]), color=color_tab[prefix])
+	plt.step(spectrum.bin_centers, spectrum.norm_freq, where='mid', label=r"{}".format(calibration["names"][prefix]), color=colors[prefix])
 	#error bars in event count
-	#plt.fill_between(spectrum.bin_centers, spectrum.norm_freq-spectrum.norm_freq_err, spectrum.norm_freq+spectrum.norm_freq_err, step='mid', alpha=0.5, color=color_tab[prefix])
+	#plt.fill_between(spectrum.bin_centers, spectrum.norm_freq-spectrum.norm_freq_err, spectrum.norm_freq+spectrum.norm_freq_err, step='mid', alpha=0.5, color=colors[prefix])
 
 	#----------fitting----------#
 	if fit == "y":
@@ -94,8 +91,9 @@ for p, prefix in enumerate(prefixes):
 
 				#fit
 				mu_inc = my_uncertainty(mu, mu_err)
-				mu_str = r'$\mu=$'+mu_inc[0]+"("+mu_inc[1]+") "+calibration["x_unit"]
-				plt.plot(xFit, result.best_fit, '-', label=mu_str, color=fit_tab[prefix])
+				#mu_str = r'$\mu=$'+mu_inc[0]+"("+mu_inc[1]+") "+calibration["x_unit"]
+				mu_str = r'$\mu=$'+mu_inc[0]+"("+mu_inc[1]+") "
+				plt.plot(xFit, result.best_fit, '-', label=mu_str, color=fit_colors[prefix])
 			
 				result_list = json.loads(result.params.dumps())["params"]
 				total_params = len(result_list)
@@ -110,9 +108,9 @@ for p, prefix in enumerate(prefixes):
 	else:
 		print("valid options are \"y\" or \"n\", not fitting.")
 	
-	xmin = 0#spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
-	xmax = 101#spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
-	grid_size = 10#(spectrum_bkgd.bin_centers[-1]-spectrum_bkgd.bin_centers[0])/10
+	xmin = spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
+	xmax = spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
+	grid_size = 100#(spectrum_bkgd.bin_centers[-1]-spectrum_bkgd.bin_centers[0])/10
 
 	major_x = np.arange(xmin, xmax, int(grid_size))
 	#minor_x = np.arange(xmin, xmax, 10)
@@ -125,8 +123,8 @@ for p, prefix in enumerate(prefixes):
 	ax.grid(which='both', axis='both')
 	#ax.grid(which='minor', axis='both', alpha=0.3)
 
-	plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
-	#plt.xlabel(r'channel')
+	#plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
+	plt.xlabel(r'channel')
 	plt.ylabel(r'$I/I_{max}$')
 	plt.yscale(value="log")
 
@@ -143,9 +141,9 @@ plt.figure(len(prefixes))
 plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
 #plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
 
-xmin = 0#spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
-xmax = 101#spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
-grid_size = 10#(spectrum_bkgd.bin_centers[-1]-spectrum_bkgd.bin_centers[0])/10
+xmin = spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
+xmax = spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
+grid_size = 100#(spectrum_bkgd.bin_centers[-1]-spectrum_bkgd.bin_centers[0])/10
 
 major_x = np.arange(xmin, xmax, int(grid_size))
 #minor_x = np.arange(xmin, xmax, 10)
@@ -158,8 +156,8 @@ ax.set_xticks(major_x)
 ax.grid(which='both', axis='both')
 #ax.grid(which='minor', axis='both', alpha=0.3)
 
-plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
-#plt.xlabel(r'channel')
+#plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
+plt.xlabel(r'channel')
 plt.ylabel(r'$I/I_{max}$')
 plt.yscale(value="log")
 

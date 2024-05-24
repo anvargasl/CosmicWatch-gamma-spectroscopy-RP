@@ -50,17 +50,18 @@ class Histogram(object):
 
 		self.fmax = max(self.freq)
 
-		if norm_value is None:
-			self.norm_freq = self.freq/self.fmax
-			self.norm_value = self.fmax
-		else:
-			self.norm_freq = self.freq/norm_value
-			self.norm_value = norm_value
-			self.norm_value_err = norm_value_err
+		#if norm_value is None:
+		#	self.norm_freq = self.freq/self.fmax
+		#	self.norm_value = self.fmax
+		#else:
+		self.norm_freq = self.freq/norm_value
+		self.norm_value = norm_value
+		self.norm_value_err = norm_value_err
 
 	def getErrors(self):
 		if self.norm_freq is None:
-			self.normalize()
+			self.norm_freq = 1
+			self.normalize(norm_value=1, norm_value_err=0)
 
 		#relative error at fmax bin
 		self.fmax_err = np.sqrt(self.fmax)

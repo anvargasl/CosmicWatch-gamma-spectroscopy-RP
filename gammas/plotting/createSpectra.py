@@ -41,7 +41,7 @@ for prefix in prefixes:
 if erase_bkgd:
 	max_freq = max_freq-data_bkgd[1][idx_max_freq]
 
-print(data['22Na'])
+#print(data['22Na'])
 
 #----------crate histogram----------#
 #dx = (max_freq-min_freq)/300
