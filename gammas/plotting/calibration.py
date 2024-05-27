@@ -19,19 +19,27 @@ import json
 import histogram_class as hmc
 from uncertainty import my_uncertainty
 
+integration = ""
 spectra_folder = "spectra/"
-#october-13-2023-high-energies, 2024-0430
-data_folder = "october-13-2023-high-energies/"
+data_folder = "october-13-2023-high-energies/"+integration
+
+config = 	{"october-13-2023-high-energies/": "teflon-side-",
+		  "2024-04-30/": "test_600s_",
+		  "2024-05-22/": "1800s_",
+		  "2024-05-24/"+integration: ""}
+config_bkgd = 	{"october-13-2023-high-energies/": "teflon-",
+		  		"2024-04-30/": "test_600s_",
+				"2024-05-22/": "1800s_",
+		  		"2024-05-24/"+integration: ""}
+data_type = {"october-13-2023-high-energies/": "RTO6",
+		  	"2024-04-30/": "NIM",
+			"2024-05-22/": "NIM",
+		  	"2024-05-24/"+integration: "NIM"}
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
 
-data_type = "RTO6" #RTO6 or NIM or RP
-
-if data_type == "RTO6":
-	config = "teflon-side-"
-	config_bkgd = "teflon-"
-
+if data_type[data_folder] == "RTO6":
 	a1_units = r") [keV/nVs] $\cdot$Area"
 	s1_units = r") [keV$^{1/2}$] $\sqrt{E}$"
 
@@ -43,14 +51,12 @@ if data_type == "RTO6":
 
 	if calibration["peak_dict"]["Cs137"]["31 keV"]["fit?"]:
 		calib_title = "Rohde\&Schwarz RTO6 oscilloscope"
-		E_lims = [0, 1500]
+		E_lims = [-100, 1500]
 	else:
 		calib_title = r"RTO6, No backscatter and x-ray peaks of $^{137}$Cs"
 		E_lims = [-100, 1500]
 
-elif data_type == "NIM":
-	config = "" #2024-04-30
-	config_bkgd = "" #2024-04-30
+elif data_type[data_folder] == "NIM":
 
 	a1_units = r") [keV/ch] $\cdot$channel"
 	s1_units = r") [keV$^{1/2}$] $\sqrt{E}$"
@@ -62,6 +68,14 @@ elif data_type == "NIM":
 		E_lims = [0, 2000]
 		major_dE = 100
 		minor_dE = 25
+	elif data_folder == "2024-05-24/"+integration:
+		if integration == "outD/":
+			calib_title = r"Integration time = 4 ns, differentiation time = 160 $\mu$s"
+		else:
+			calib_title = "differentiate time = "+integration[:-2]+" ns"
+		E_lims = [0, 1650]
+		major_dE = 100
+		minor_dE = 25		
 
 #list of isotopes
 prefixes = calibration["prefixes"]
@@ -90,7 +104,7 @@ for prefix in prefixes:
 #----------fitting E vs channel----------#
 import fitting
 
-params = [-9, 3] #y = a0+a1*x
+params = calibration["E_chan_transform"]["fit_init"] #y = a0+a1*x
 result = fitting.Fit_Line(x=mu, y=energies, parameters=params)
 
 a0 = result.params['a0'].value
@@ -101,6 +115,7 @@ a1_err = result.params['a1'].stderr
 calibration["E_chan_transform"]["fit_init"] = params #save calibration data
 calibration["E_chan_transform"]["a0"] = [a0, a0_err]
 calibration["E_chan_transform"]["a1"] = [a1, a1_err]
+calibration["E_chan_transform"]["chi2"] = result.chisqr
 
 print(result.fit_report())
 
@@ -126,7 +141,7 @@ plt.ylabel(r'$E$ [keV]')
 
 plt.grid()
 plt.legend()
-if data_type == "RTO6":
+if data_type[data_folder] == "RTO6":
 	if calibration["peak_dict"]["Cs137"]["31 keV"]["fit?"]:
 		plt.savefig("../figures/"+data_folder+"LYSO_calibration_low_peaks.pdf", bbox_inches="tight")
 	else:
@@ -140,7 +155,7 @@ plt.clf()
 plt.figure(1)
 
 #plot background
-spectrum_bkgd = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+config_bkgd+prefix_bkgd+'_spectrum.txt')
+spectrum_bkgd = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+prefix_bkgd+'_spectrum.txt')
 
 #Energy domain
 X = np.array([a0 + a1*x for x in spectrum_bkgd.bin_centers])
@@ -152,7 +167,7 @@ plt.axvline(597, color=color_bkgd, alpha=0.7, ymin=0.0, ymax=1.0, ls=':', label=
 
 for prefix in prefixes:
 	#read spectra
-	spectrum = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+config+prefix+'_spectrum.txt')
+	spectrum = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
 
 	plt.step(X, spectrum.norm_freq, where='mid', label=prefix, color=colors[prefix])
 	#error bars in event count
@@ -200,7 +215,7 @@ plt.ylabel(r'$I/I_{max}$')
 
 plt.yscale(value='log')
 plt.legend(loc="lower left", ncols=2)
-if data_type == "RTO6":
+if data_type[data_folder] == "RTO6":
 	if calibration["peak_dict"]["Cs137"]["31 keV"]["fit?"]:
 		plt.savefig("../figures/"+data_folder+"Calibrated_spectrum_low_peaks.pdf", bbox_inches="tight")
 	else:
@@ -210,7 +225,7 @@ else:
 
 #----------fitting FWHM vs E----------#
 
-params = [49, 2.9] #y = s0+s1*sqrt(x)
+params = calibration["FWHM_vs_E"]["fit_init"] #y = s0+s1*sqrt(x)
 result = fitting.Fit_sqrt(x=energies, y=FWHM_values, parameters=params)
 
 s0 = result.params['s0'].value
@@ -221,6 +236,7 @@ s1_err = result.params['s1'].stderr
 calibration["FWHM_vs_E"]["fit_init"] = params #save calibration data
 calibration["FWHM_vs_E"]["s0"] = [s0, s0_err]
 calibration["FWHM_vs_E"]["s1"] = [s1, s1_err]
+calibration["FWHM_vs_E"]["chi2"] = result.chisqr
 
 print(result.fit_report())
 
@@ -251,7 +267,7 @@ plt.ylabel(r'FWHM [keV]')
 plt.grid()
 
 plt.legend(loc="upper left")
-if data_type == "RTO6":
+if data_type[data_folder] == "RTO6":
 	if calibration["peak_dict"]["Cs137"]["31 keV"]["fit?"]:
 		plt.savefig("../figures/"+data_folder+"FWHM_low_peaks.pdf", bbox_inches="tight")
 	else:

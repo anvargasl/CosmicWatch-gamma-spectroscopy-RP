@@ -5,10 +5,21 @@ import json
 #file where the Histogram class is defined
 import histogram_class as hmc
 
+integration = ""
 spectra_folder = "spectra/"
-data_folder = "october-13-2023-high-energies/"
+data_folder = "2024-04-30/"+integration
+
+config = 	{"october-13-2023-high-energies/": "teflon-side-",
+		  "2024-04-30/": "test_600s_",
+		  "2024-05-22/": "1800s_",
+		  "2024-05-24/"+integration: ""}
+config_bkgd = 	{"october-13-2023-high-energies/": "teflon-",
+		  		"2024-04-30/": "test_600s_",
+				"2024-05-22/": "1800s_",
+		  		"2024-05-24/"+integration: ""}
 
 erase_bkgd = 0 #0: do not erase, 1: erase
+normalize = 0 #0: do not normalize, 1: normalize
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
@@ -19,7 +30,7 @@ prefixes = calibration["prefixes"]
 prefix_bkgd = calibration["prefix_bkgd"]
 
 #----------read data----------#
-data_bkgd = np.genfromtxt('../data/'+data_folder+'2024-04-30_'+prefix_bkgd+'_test_600s.txt', dtype=(int, int), usecols=[0,2], skip_header=1).T
+data_bkgd = np.genfromtxt('../data/'+data_folder+config_bkgd[data_folder]+prefix_bkgd+'.txt', dtype=(int, int), usecols=[0,2], skip_header=1).T
 
 data = {prefix: np.array([0]) for prefix in prefixes}
 
@@ -28,7 +39,7 @@ idx_max_freq = None
 min_freq = 0
 
 for prefix in prefixes:
-	data[prefix] = np.genfromtxt('../data/'+data_folder+'2024-04-30_'+prefix+'_test_600s.txt', dtype=(int, int), usecols=[0,2], skip_header=1).T
+	data[prefix] = np.genfromtxt('../data/'+data_folder+config[data_folder]+prefix+'.txt', dtype=(int, int), usecols=[0,2], skip_header=1).T
 
 	temp = data[prefix][1].max()
 	if max_freq < temp:
@@ -52,7 +63,7 @@ bin_edges = data[prefixes[0]][0]-dx
 bin_edges = np.append(bin_edges, bin_edges[-1]+dx)
 
 spectrum_bkgd = hmc.Histogram(prefix_bkgd, dx, bin_edges, data_bkgd[1])
-spectrum_bkgd.normalize(max_freq, np.sqrt(max_freq))
+if normalize: spectrum_bkgd.normalize(max_freq, np.sqrt(max_freq))
 
 spectrum_bkgd.getErrors()
 spectrum_bkgd.print_hist(f_name='../data/'+data_folder+spectra_folder+prefix_bkgd+'_spectrum.txt')
@@ -65,7 +76,7 @@ for prefix in prefixes:
 	spectrums[prefix] = hmc.Histogram(prefix, dx, bin_edges, data[prefix][1]-erase_bkgd*data_bkgd[1])
 	
 	#----------statistics----------#
-	spectrums[prefix].normalize(max_freq, np.sqrt(max_freq))
+	if normalize: spectrums[prefix].normalize(max_freq, np.sqrt(max_freq))
 
 	spectrums[prefix].getErrors()
 	spectrums[prefix].print_hist(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
@@ -74,5 +85,5 @@ for prefix in prefixes:
 
 plt.legend()
 
-plt.yscale(value='log')
+if not erase_bkgd: plt.yscale(value='log')
 plt.show()

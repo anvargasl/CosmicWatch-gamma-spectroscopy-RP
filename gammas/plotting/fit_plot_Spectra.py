@@ -19,8 +19,45 @@ import json
 import histogram_class as hmc
 from uncertainty import my_uncertainty
 
+integration = "outD/"
 spectra_folder = "spectra/"
-data_folder = "october-13-2023-high-energies/"
+data_folder = "2024-05-24/"+integration
+
+config = 	{"october-13-2023-high-energies/": "teflon-side-",
+		  "2024-04-30/": "test_600s_",
+		  "2024-05-22/": "1800s_",
+		  "2024-05-24/"+integration: ""}
+config_bkgd = 	{"october-13-2023-high-energies/": "teflon-",
+		  		"2024-04-30/": "test_600s_",
+				"2024-05-22/": "1800s_",
+		  		"2024-05-24/"+integration: ""}
+data_type = {"october-13-2023-high-energies/": "RTO6",
+		  	"2024-04-30/": "NIM",
+			"2024-05-22/": "NIM",
+		  	"2024-05-24/"+integration: "NIM"}
+
+erase_bkgd = 1 #0: do not erase, 1: erase
+normalize = 0 #0: do not normalize, 1: normalize
+
+if data_type[data_folder] == "RTO6":
+	xlabel = "SiPM pulse Area [nVs]"
+	if normalize:
+		ylabel = r'$I/I_{max}$'
+	else:
+		ylabel = r'$I$ [counts]'
+
+	grid_size = 10
+	channel_lims = [0, 100]
+
+elif data_type[data_folder] == "NIM":
+	xlabel = "channel"
+	if normalize:
+		ylabel = r'$I/I_{max}$'
+	else:
+		ylabel = r'$I$ [counts]'
+
+	grid_size = 100
+	channel_lims = [0, 1000]
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
@@ -36,14 +73,8 @@ fit_colors = calibration["fit_colors"]
 
 color_bkgd = calibration["color_bkgd"]
 
-config = "teflon-side-" #Ba133-october-12-2023
-config_bkgd = "teflon-" #Ba133-october-12-2023
-
-#config = "" #2024-04-30, 2024-05-22
-#config_bkgd = "" #2024-04-30, 2024-05-22
-
 #read background data
-spectrum_bkgd = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+config_bkgd+prefix_bkgd+'_spectrum.txt')
+spectrum_bkgd = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+prefix_bkgd+'_spectrum.txt')
 
 #----------fitting/plotting area----------#
 from fitting import Fit_Gauss_plus_bkgd
@@ -56,10 +87,11 @@ from fitting import Fit_Gauss_plus_bkgd
 fit = "y"
 for p, prefix in enumerate(prefixes):
 	plt.figure(p)
-	fname = '../data/'+data_folder+spectra_folder+config+prefix+'_spectrum.txt'
+	fname = '../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt'
 	spectrum = hmc.Histogram(f_name=fname)
 
 	#background
+	#if not erase_bkgd:
 	plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
 	#plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
 	#normalized histogram
@@ -108,11 +140,10 @@ for p, prefix in enumerate(prefixes):
 	else:
 		print("valid options are \"y\" or \"n\", not fitting.")
 	
-	xmin = spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
-	xmax = spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
-	grid_size = 100#(spectrum_bkgd.bin_centers[-1]-spectrum_bkgd.bin_centers[0])/10
+	#xmin = spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
+	#xmax = spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
 
-	major_x = np.arange(xmin, xmax, int(grid_size))
+	major_x = np.arange(channel_lims[0], channel_lims[1]+1, int(grid_size))
 	#minor_x = np.arange(xmin, xmax, 10)
 	ax = plt.gca()
 	ax.set_xticks(major_x)
@@ -124,13 +155,13 @@ for p, prefix in enumerate(prefixes):
 	#ax.grid(which='minor', axis='both', alpha=0.3)
 
 	#plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
-	plt.xlabel(r'channel')
-	plt.ylabel(r'$I/I_{max}$')
-	plt.yscale(value="log")
+	plt.xlabel(xlabel)
+	plt.ylabel(ylabel)
+	if not erase_bkgd: plt.yscale(value="log")
 
-	plt.legend(loc="lower left")
+	plt.legend(loc="upper right")
 
-	plt.savefig('../figures/'+data_folder+config+prefix+'.pdf', bbox_inches="tight")
+	plt.savefig('../figures/'+data_folder+prefix+'.pdf', bbox_inches="tight")
 
 #save calibration data
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "w") as outfile: 
@@ -141,11 +172,10 @@ plt.figure(len(prefixes))
 plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
 #plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
 
-xmin = spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
-xmax = spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
-grid_size = 100#(spectrum_bkgd.bin_centers[-1]-spectrum_bkgd.bin_centers[0])/10
+#xmin = spectrum_bkgd.bin_centers[0]-(spectrum_bkgd.bin_size/2)
+#xmax = spectrum_bkgd.bin_centers[-1]-(spectrum_bkgd.bin_size/2)
 
-major_x = np.arange(xmin, xmax, int(grid_size))
+major_x = np.arange(channel_lims[0], channel_lims[1]+1, int(grid_size))
 #minor_x = np.arange(xmin, xmax, 10)
 ax = plt.gca()
 ax.set_xticks(major_x)
@@ -157,10 +187,10 @@ ax.grid(which='both', axis='both')
 #ax.grid(which='minor', axis='both', alpha=0.3)
 
 #plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
-plt.xlabel(r'channel')
-plt.ylabel(r'$I/I_{max}$')
-plt.yscale(value="log")
+plt.xlabel(xlabel)
+plt.ylabel(ylabel)
+if not erase_bkgd: plt.yscale(value="log")
 
-plt.legend(loc="lower left")
+plt.legend(loc="upper right")
 
-plt.savefig('../figures/'+data_folder+config_bkgd+prefix_bkgd+'.pdf', bbox_inches="tight")
+plt.savefig('../figures/'+data_folder+prefix_bkgd+'.pdf', bbox_inches="tight")
