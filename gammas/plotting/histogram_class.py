@@ -60,17 +60,18 @@ class Histogram(object):
 
 	def getErrors(self):
 		if self.norm_freq is None:
-			self.norm_freq = 1
-			self.normalize(norm_value=1, norm_value_err=0)
+			self.norm_freq = self.freq
+			self.norm_value = 1
+			self.normalize(norm_value=self.norm_value, norm_value_err=0)
 
 		#relative error at fmax bin
 		self.fmax_err = np.sqrt(self.fmax)
 
 		#relative error at each bin
-		self.freq_err = [np.sqrt(f) if f>0 else 0 for f in self.freq]
+		self.freq_err = np.array([np.sqrt(f) if f>0 else 0 for f in self.freq])
 
 		#frequencies error in the normalized histogram
-		self.norm_freq_err = [0]*self.nbins
+		self.norm_freq_err = np.zeros_like(self.bin_centers)
 		dN2 = (self.norm_value_err/self.norm_value)**2
 		for j in range(self.nbins):
 			if self.freq_err[j] != 0:
