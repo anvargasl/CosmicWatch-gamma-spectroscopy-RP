@@ -19,22 +19,25 @@ import json
 import histogram_class as hmc
 from uncertainty import my_uncertainty
 
-integration = "outD/"
+integration = ""
 spectra_folder = "spectra/"
-data_folder = "2024-05-24/"+integration
+data_folder = "PICO/"+integration
 
 config = 	{"october-13-2023-high-energies/": "teflon-side-",
 		  "2024-04-30/": "test_600s_",
 		  "2024-05-22/": "1800s_",
-		  "2024-05-24/"+integration: ""}
+		  "2024-05-24/"+integration: "",
+		  "PICO/": ""}
 config_bkgd = 	{"october-13-2023-high-energies/": "teflon-",
 		  		"2024-04-30/": "test_600s_",
 				"2024-05-22/": "1800s_",
-		  		"2024-05-24/"+integration: ""}
+		  		"2024-05-24/"+integration: "",
+				"PICO/": ""}
 data_type = {"october-13-2023-high-energies/": "RTO6",
 		  	"2024-04-30/": "NIM",
 			"2024-05-22/": "NIM",
-		  	"2024-05-24/"+integration: "NIM"}
+		  	"2024-05-24/"+integration: "NIM",
+			"PICO/": "PICO"}
 
 erase_bkgd = 1 #0: do not erase, 1: erase
 normalize = 0 #0: do not normalize, 1: normalize
@@ -58,6 +61,16 @@ elif data_type[data_folder] == "NIM":
 
 	grid_size = 100
 	channel_lims = [0, 1000]
+
+elif data_type[data_folder] == "PICO":
+	xlabel = "channels"
+	if normalize:
+		ylabel = r'$I/I_{max}$'
+	else:
+		ylabel = r'$I$ [counts]'
+
+	grid_size = 5000
+	channel_lims = [0, 30000]
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
@@ -149,7 +162,7 @@ for p, prefix in enumerate(prefixes):
 	ax.set_xticks(major_x)
 	#ax.set_xticks(minor_x, minor=True)
 
-	#ax.set_xlim(right=50)
+	ax.set_xlim(right=channel_lims[1])
 
 	ax.grid(which='both', axis='both')
 	#ax.grid(which='minor', axis='both', alpha=0.3)
@@ -181,7 +194,7 @@ ax = plt.gca()
 ax.set_xticks(major_x)
 #ax.set_xticks(minor_x, minor=True)
 
-#ax.set_xlim(right=50)
+ax.set_xlim(right=channel_lims[1])
 
 ax.grid(which='both', axis='both')
 #ax.grid(which='minor', axis='both', alpha=0.3)
