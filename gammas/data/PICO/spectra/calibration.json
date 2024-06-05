@@ -6,17 +6,29 @@
     "column_names": ["x", "y"],
     "make_histogram": 1,
     "prefixes": [
-        "22Na"
+        "54Mn_1",
+        "22Na",
+        "54Mn_2",
+        "54Mn"
     ],
     "prefix_bkgd": "bkgd",
     "names": {
-        "22Na": "$^{22}$Na"
+        "22Na": "$^{22}$Na",
+        "54Mn": "$^{54}$Mn",
+        "54Mn_2": "$^{54}$Mn 2",
+        "54Mn_1": "$^{54}$Mn 1"
     },
     "colors": {
-        "22Na": "tab:orange"
+        "22Na": "tab:orange",
+        "54Mn": "tab:red",
+        "54Mn_1": "tab:green",
+        "54Mn_2": "tab:blue"
     },
     "fit_colors": {
-        "22Na": "tab:purple"
+        "22Na": "tab:purple",
+        "54Mn": "tab:gray",
+        "54Mn_1": "tab:blue",
+        "54Mn_2": "tab:blue"
     },
     "color_bkgd": "tab:cyan",
     "x_unit": "channel",

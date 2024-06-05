@@ -21,7 +21,7 @@ from uncertainty import my_uncertainty
 
 integration = ""
 spectra_folder = "spectra/"
-data_folder = "october-13-2023-high-energies/"+integration
+data_folder = "PICO/"+integration
 
 config = 	{"october-13-2023-high-energies/": "teflon-side-",
 		  "2024-04-30/": "test_600s_",

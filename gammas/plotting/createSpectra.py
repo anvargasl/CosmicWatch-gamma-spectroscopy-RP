@@ -30,7 +30,7 @@ dtypes = {"october-13-2023-high-energies/": [("x", int), ("y", int)],
 		"2024-05-24/"+integration: [("x", int), ("y", int)],
 		"PICO/": [("x", int), ("y", int)]}
 
-erase_bkgd = 0 #0: do not erase, 1: erase
+erase_bkgd = 1 #0: do not erase, 1: erase
 normalize = 0 #0: do not normalize, 1: normalize
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
@@ -134,8 +134,6 @@ if normalize: spectrum_bkgd.normalize(max_freq, np.sqrt(max_freq))
 spectrum_bkgd.getErrors()
 spectrum_bkgd.print_hist(f_name='../data/'+data_folder+spectra_folder+prefix_bkgd+'_spectrum.txt')
 
-plt.plot(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, label=prefix_bkgd)
-
 spectrums = {p:None for p in prefixes}
 
 spectrums = {prefix: np.array([0]) for prefix in prefixes}
@@ -148,7 +146,9 @@ for prefix in prefixes:
 	spectrums[prefix].getErrors()
 	spectrums[prefix].print_hist(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
 
-	plt.plot(spectrums[prefix].bin_centers, spectrums[prefix].norm_freq, label=prefix)
+	plt.plot(spectrums[prefix].bin_centers, spectrums[prefix].norm_freq, label=prefix, color=calibration["colors"][prefix])
+
+#plt.plot(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, label=prefix_bkgd, alpha=0.3)
 
 plt.legend()
 
