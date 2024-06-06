@@ -13,6 +13,8 @@ mpl.rcParams['mathtext.fontset'] = 'dejavusans'
 mpl.rcParams.update({'font.size': fsize})
 
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from mpl_toolkits.axes_grid1.inset_locator import mark_inset
 import numpy as np
 import json
 
@@ -57,7 +59,7 @@ prefix_bkgd = calibration["prefix_bkgd"]
 
 #----------read data----------#
 data_bkgd = np.genfromtxt('../data/'+data_folder+calibration["config_bkgd"]+prefix_bkgd+'.txt', dtype=calibration["dtypes"], names=calibration["column_names"], usecols=calibration["columns"], skip_header=1).T
-data_bkgd["y"] = data_bkgd["y"]/16 #the data actually has 12 bit resolution
+data_bkgd["y"] = (data_bkgd["y"]/16).astype(int) #the data actually has 12 bit resolution
 if calibration["make_histogram"]:
 	print("Erase corrupt data")
 	#data_bkgd = data_bkgd[data_bkgd["y"] != 8177]
@@ -71,7 +73,7 @@ min_bin = 5000
 
 for prefix in prefixes:
 	data[prefix] = np.genfromtxt('../data/'+data_folder+calibration["config"]+prefix+'.txt', dtype=calibration["dtypes"], names=calibration["column_names"], usecols=calibration["columns"], skip_header=1).T
-	#data[prefix]["y"] = data[prefix]["y"]/16
+	data[prefix]["y"] = (data[prefix]["y"]/16).astype(int) #the data actually has 12 bit resolution
 
 	if calibration["make_histogram"]:
 		#Erase corrupt data
@@ -99,8 +101,8 @@ print(min_bin, max_bin)
 if calibration["make_histogram"]:
 	#dx = 128
 	#min_bin = 1006 #first low peak at 1008
-	dx = 1
-	bins = np.arange(min_bin, max_bin+(dx/2), dx)
+	dx = 8
+	bins = np.arange(0, int((2**12)/8)+1, dx)
 	bin_edges = np.append(bins, bins[-1]+dx)
 	print(bin_edges)
 else:
@@ -123,7 +125,14 @@ for prefix in prefixes:
 		if duplicates: print(duplicates, "duplicates found in", prefix)
 		#histogram y values
 		#freq[prefix], _ = np.histogram(data[prefix]["y"][indices], bins=bin_edges)
-		freq[prefix], _ = np.histogram(data[prefix]["y"][indices], bins=2**16, range=(0, 2**16))
+		temp, _ = np.histogram(data[prefix]["y"][indices], bins=(2**12), range=(0, 2**12))
+		temp[511] = int(temp[511]/10)
+		temp[1535] = int(temp[1535]/7.2)
+		
+		n_bins = int((2**12)/8)
+		freq[prefix] = np.zeros(n_bins)
+		for i in range(n_bins):
+			freq[prefix][i] = sum(temp[i*8:(i+1)*8])
 	else: freq[prefix] = data[prefix]["y"]
 
 	temp = freq[prefix].max()
@@ -142,7 +151,14 @@ if calibration["make_histogram"]:
 	if duplicates: print(duplicates, "duplicates found in bkgd")
 	#histogram y values
 	#freq_bkgd, _ = np.histogram(data_bkgd["y"][indices], bins=bin_edges)
-	freq_bkgd, _ = np.histogram(data_bkgd["y"][indices], bins=2**16, range=(0, 2**16))
+	temp, _ = np.histogram(data_bkgd["y"][indices], bins=(2**12), range=(0, 2**12))
+	temp[511] = int(temp[511]/10)
+	temp[1535] = int(temp[1535]/7.2)
+
+	n_bins = int((2**12)/8)
+	freq_bkgd = np.zeros(n_bins)
+	for i in range(n_bins):
+		freq_bkgd[i] = sum(temp[i*8:(i+1)*8])
 else: freq_bkgd = data_bkgd["y"]
 
 if erase_bkgd:
@@ -156,6 +172,7 @@ if normalize: spectrum_bkgd.normalize(max_freq, np.sqrt(max_freq))
 
 #----------plotting----------#
 fig, ax = plt.subplots()
+#axins = inset_axes(ax, 2, 1, loc=1, bbox_to_anchor=(0.7, 0.85), bbox_transform=ax.figure.transFigure)
 
 spectrums = {p:None for p in prefixes}
 
@@ -164,14 +181,15 @@ for prefix in prefixes:
 	spectrums[prefix] = hmc.Histogram(prefix, dx, bin_edges, freq[prefix]-erase_bkgd*freq_bkgd)
 	
 	#----------statistics----------#
-	if normalize: spectrums[prefix].normalize(max_freq, np.sqrt(max_freq))
+	#if normalize: spectrums[prefix].normalize(max_freq, np.sqrt(max_freq))
 
 	#spectrums[prefix].getErrors()
 	#spectrums[prefix].print_hist(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
 
-	#plt.plot(spectrums[prefix].bin_centers, spectrums[prefix].norm_freq, label=prefix, color=calibration["colors"][prefix])
+	plt.plot(spectrums[prefix].bin_centers, spectrums[prefix].freq, label=prefix, color=calibration["colors"][prefix])
 	#plt.plot(bin_edges[:-1], spectrums[prefix].norm_freq, label=prefix, color=calibration["colors"][prefix])
-	ax.plot(np.arange(0,2**16), spectrums[prefix].freq, label=r"{}".format(calibration["names"][prefix]), color=calibration["colors"][prefix])
+	#ax.plot(np.arange(0,2**12, 8), spectrums[prefix].freq, label=r"{}".format(calibration["names"][prefix]), color=calibration["colors"][prefix], lw=1)
+	#axins.plot(np.arange(0,2**12), spectrums[prefix].freq, color=calibration["colors"][prefix], lw=1)
 
 #plt.plot(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, label=prefix_bkgd, alpha=0.3)
 
@@ -184,14 +202,13 @@ for prefix in prefixes:
 
 #plt.plot(x_values, Na22_array, label="non zero channels")
 
-ax.set_title("RaspberryPi Pico, raw ADC output")
+ax.set_title("RaspberryPi Pico, 12-bit ADC output")
 ax.set_xlabel("ADC reading [cahnnel]")
 ax.set_ylabel(r"$I$ [counts]")
 
-#grid_size = 128
-major_grid = 8000
-minor_grid = 2000
-channel_lims = [0, 2**16]
+major_grid = 500
+minor_grid = 100
+channel_lims = [0, 2**12]
 ax.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, major_grid))
 ax.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, minor_grid), minor=True)
 
@@ -205,12 +222,40 @@ ax.set_yticks(np.arange(channel_lims[0], channel_lims[1]+1, minor_grid), minor=T
 
 ax.set_ylim(bottom=-minor_grid, top=channel_lims[1]+minor_grid)
 
-#plt.ylim(bottom=0, top=5000)
-#plt.ylim(top=10000)
 ax.grid(which='both', axis='both')
 ax.grid(which='minor', axis='both', alpha=0.3)
-plt.legend()
+ax.legend()
 
+
+
+ax.axvline(x=511)
+ax.axvline(x=1535)
+
+
+
+
+#inset
+major_grid = 16
+minor_grid = 8
+channel_lims = [1000, 1048]
+#axins.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, major_grid))
+#axins.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, minor_grid), minor=True)
+major_grid = 500
+minor_grid = 100
+channel_lims = [-500, 700]
+#axins.set_yticks(np.arange(channel_lims[0], channel_lims[1]+1, major_grid))
+#axins.set_yticks(np.arange(channel_lims[0], channel_lims[1]+1, minor_grid), minor=True)
+
+#axins.grid(which='both', axis='both')
+#axins.grid(which='minor', axis='both', alpha=0.3)
+
+x1, x2, y1, y2 = 1000, 1048, -100, 700
+#axins.set_xlim(x1, x2)
+#axins.set_ylim(y1, y2)
+
+
+#ax.indicate_inset_zoom(axins, edgecolor="black")
+#mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
 #if not erase_bkgd: plt.yscale(value='log')
-#plt.show()
-plt.savefig("../figures/"+data_folder+"raw_adc.pdf", bbox_inches="tight")
+plt.show()
+#plt.savefig("../figures/"+data_folder+"scaled_raw_adc.pdf", bbox_inches="tight")
