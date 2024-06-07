@@ -125,15 +125,17 @@ for prefix in prefixes:
 		#histogram y values
 		#freq[prefix], _ = np.histogram(data[prefix]["y"][indices], bins=bin_edges)
 		temp, _ = np.histogram(data[prefix]["y"][indices], bins=(2**12), range=(0, 2**12))
-		temp[511] = int(temp[511]/20) #10
-		temp[1535] = int(temp[1535]/16.4) #8.2
-		
+
+		#erase low counts by grouping 8 bins		
 		n_bins = int((2**12)/8)
 		freq[prefix] = np.zeros(n_bins, dtype=int)
 		for i in range(n_bins):
 			freq[prefix][i] = sum(temp[i*8:(i+1)*8])
 
-		#freq[prefix] = temp
+		#erase DNL issues by averaging
+		freq[prefix][63] = (freq[prefix][64]+freq[prefix][62])/2
+		freq[prefix][191] = (freq[prefix][190]+freq[prefix][192])/2
+
 	else: freq[prefix] = data[prefix]["y"]
 
 	temp = freq[prefix].max()
@@ -153,15 +155,17 @@ if calibration["make_histogram"]:
 	#histogram y values
 	#freq_bkgd, _ = np.histogram(data_bkgd["y"][indices], bins=bin_edges)
 	temp, _ = np.histogram(data_bkgd["y"][indices], bins=(2**12), range=(0, 2**12))
-	print(temp)
-	temp[511] = int(temp[511]/10)
-	temp[1535] = int(temp[1535]/7.2)
 
+	#erase low counts by grouping 8 bins
 	n_bins = int((2**12)/8)
 	freq_bkgd = np.zeros(n_bins, dtype=int)
 	for i in range(n_bins):
 		freq_bkgd[i] = sum(temp[i*8:(i+1)*8])
-	print(freq_bkgd)
+	
+	#erase DNL issues by averaging
+	freq_bkgd[63] = (freq_bkgd[62]+freq_bkgd[64])/2
+	freq_bkgd[191] = (freq_bkgd[190]+freq_bkgd[192])/2
+	
 else: freq_bkgd = data_bkgd["y"]
 
 if erase_bkgd:
