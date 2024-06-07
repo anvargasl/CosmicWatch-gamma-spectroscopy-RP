@@ -69,8 +69,9 @@ elif data_type[data_folder] == "PICO":
 	else:
 		ylabel = r'$I$ [counts]'
 
-	grid_size = 5000
-	channel_lims = [0, 30000]
+	minor_grid = 100
+	grid_size = 500
+	channel_lims = [0, 2000]
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
@@ -105,7 +106,7 @@ for p, prefix in enumerate(prefixes):
 
 	#background
 	#if not erase_bkgd:
-	plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
+	#plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
 	#plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
 	#normalized histogram
 	plt.step(spectrum.bin_centers, spectrum.norm_freq, where='mid', label=r"{}".format(calibration["names"][prefix]), color=colors[prefix])
@@ -159,13 +160,13 @@ for p, prefix in enumerate(prefixes):
 	major_x = np.arange(channel_lims[0], channel_lims[1]+1, int(grid_size))
 	#minor_x = np.arange(xmin, xmax, 10)
 	ax = plt.gca()
-	ax.set_xticks(major_x)
-	#ax.set_xticks(minor_x, minor=True)
-
-	ax.set_xlim(right=channel_lims[1])
+	ax.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, int(grid_size)))
+	ax.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, int(minor_grid)), minor=True)
 
 	ax.grid(which='both', axis='both')
-	#ax.grid(which='minor', axis='both', alpha=0.3)
+	ax.grid(which='minor', axis='both', alpha=0.3)
+
+	ax.set_xlim(left=channel_lims[0], right=channel_lims[1])
 
 	#plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
 	plt.xlabel(xlabel)
@@ -194,7 +195,7 @@ ax = plt.gca()
 ax.set_xticks(major_x)
 #ax.set_xticks(minor_x, minor=True)
 
-ax.set_xlim(right=channel_lims[1])
+ax.set_xlim(left=channel_lims[0], right=channel_lims[1])
 
 ax.grid(which='both', axis='both')
 #ax.grid(which='minor', axis='both', alpha=0.3)

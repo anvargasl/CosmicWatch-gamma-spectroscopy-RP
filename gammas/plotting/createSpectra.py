@@ -46,7 +46,7 @@ dtypes = {"october-13-2023-high-energies/": [("x", int), ("y", int)],
 		"2024-05-24/"+integration: [("x", int), ("y", int)],
 		"PICO/": [("x", int), ("y", int)]}
 
-erase_bkgd = 0 #0: do not erase, 1: erase
+erase_bkgd = 1 #0: do not erase, 1: erase
 normalize = 0 #0: do not normalize, 1: normalize
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
@@ -102,9 +102,8 @@ if calibration["make_histogram"]:
 	#dx = 128
 	#min_bin = 1006 #first low peak at 1008
 	dx = 8
-	bins = np.arange(0, int((2**12)/8)+1, dx)
-	bin_edges = np.append(bins, bins[-1]+dx)
-	print(bin_edges)
+	bins = np.arange(0, (2**12)+1, dx)
+	bin_edges = bins
 else:
 	#dx = (max_bin-min_bin)/300
 	dx = 1
@@ -126,13 +125,15 @@ for prefix in prefixes:
 		#histogram y values
 		#freq[prefix], _ = np.histogram(data[prefix]["y"][indices], bins=bin_edges)
 		temp, _ = np.histogram(data[prefix]["y"][indices], bins=(2**12), range=(0, 2**12))
-		temp[511] = int(temp[511]/10)
-		temp[1535] = int(temp[1535]/7.2)
+		temp[511] = int(temp[511]/20) #10
+		temp[1535] = int(temp[1535]/16.4) #8.2
 		
 		n_bins = int((2**12)/8)
-		freq[prefix] = np.zeros(n_bins)
+		freq[prefix] = np.zeros(n_bins, dtype=int)
 		for i in range(n_bins):
 			freq[prefix][i] = sum(temp[i*8:(i+1)*8])
+
+		#freq[prefix] = temp
 	else: freq[prefix] = data[prefix]["y"]
 
 	temp = freq[prefix].max()
@@ -152,13 +153,15 @@ if calibration["make_histogram"]:
 	#histogram y values
 	#freq_bkgd, _ = np.histogram(data_bkgd["y"][indices], bins=bin_edges)
 	temp, _ = np.histogram(data_bkgd["y"][indices], bins=(2**12), range=(0, 2**12))
+	print(temp)
 	temp[511] = int(temp[511]/10)
 	temp[1535] = int(temp[1535]/7.2)
 
 	n_bins = int((2**12)/8)
-	freq_bkgd = np.zeros(n_bins)
+	freq_bkgd = np.zeros(n_bins, dtype=int)
 	for i in range(n_bins):
 		freq_bkgd[i] = sum(temp[i*8:(i+1)*8])
+	print(freq_bkgd)
 else: freq_bkgd = data_bkgd["y"]
 
 if erase_bkgd:
@@ -167,8 +170,8 @@ if erase_bkgd:
 spectrum_bkgd = hmc.Histogram(prefix_bkgd, dx, bin_edges, freq_bkgd)
 if normalize: spectrum_bkgd.normalize(max_freq, np.sqrt(max_freq))
 
-#spectrum_bkgd.getErrors()
-#spectrum_bkgd.print_hist(f_name='../data/'+data_folder+spectra_folder+prefix_bkgd+'_spectrum.txt')
+spectrum_bkgd.getErrors()
+spectrum_bkgd.print_hist(f_name='../data/'+data_folder+spectra_folder+prefix_bkgd+'_spectrum.txt')
 
 #----------plotting----------#
 fig, ax = plt.subplots()
@@ -181,12 +184,12 @@ for prefix in prefixes:
 	spectrums[prefix] = hmc.Histogram(prefix, dx, bin_edges, freq[prefix]-erase_bkgd*freq_bkgd)
 	
 	#----------statistics----------#
-	#if normalize: spectrums[prefix].normalize(max_freq, np.sqrt(max_freq))
+	if normalize: spectrums[prefix].normalize(max_freq, np.sqrt(max_freq))
 
-	#spectrums[prefix].getErrors()
-	#spectrums[prefix].print_hist(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
+	spectrums[prefix].getErrors()
+	spectrums[prefix].print_hist(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
 
-	plt.plot(spectrums[prefix].bin_centers, spectrums[prefix].freq, label=prefix, color=calibration["colors"][prefix])
+	plt.plot(spectrums[prefix].bin_centers, spectrums[prefix].freq, label=r"{}".format(calibration["names"][prefix]), color=calibration["colors"][prefix], lw=1)
 	#plt.plot(bin_edges[:-1], spectrums[prefix].norm_freq, label=prefix, color=calibration["colors"][prefix])
 	#ax.plot(np.arange(0,2**12, 8), spectrums[prefix].freq, label=r"{}".format(calibration["names"][prefix]), color=calibration["colors"][prefix], lw=1)
 	#axins.plot(np.arange(0,2**12), spectrums[prefix].freq, color=calibration["colors"][prefix], lw=1)
@@ -226,13 +229,8 @@ ax.grid(which='both', axis='both')
 ax.grid(which='minor', axis='both', alpha=0.3)
 ax.legend()
 
-
-
-ax.axvline(x=511)
-ax.axvline(x=1535)
-
-
-
+#ax.axvline(x=511)
+#ax.axvline(x=1535)
 
 #inset
 major_grid = 16
@@ -258,4 +256,4 @@ x1, x2, y1, y2 = 1000, 1048, -100, 700
 #mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
 #if not erase_bkgd: plt.yscale(value='log')
 plt.show()
-#plt.savefig("../figures/"+data_folder+"scaled_raw_adc.pdf", bbox_inches="tight")
+#plt.savefig("../figures/"+data_folder+"8channel_bins.pdf", bbox_inches="tight")
