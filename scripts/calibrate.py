@@ -1,3 +1,17 @@
+import matplotlib as mpl
+
+fsize = 12
+mpl.rcParams['legend.fontsize'] = fsize-2
+mpl.rcParams['axes.titlesize'] = fsize+2
+mpl.rcParams["figure.figsize"] = (6.47, (6.47*9)/20)
+mpl.rcParams['axes.labelsize'] = fsize
+mpl.rcParams['xtick.labelsize'] = fsize
+mpl.rcParams['ytick.labelsize'] = fsize
+mpl.rcParams['text.usetex'] = True
+mpl.rcParams['font.family'] = 'sans-serif'
+mpl.rcParams['mathtext.fontset'] = 'dejavusans'
+mpl.rcParams.update({'font.size': fsize})
+
 from matplotlib import pyplot as plt
 import matplotlib.cm as cm
 import numpy as np
@@ -18,6 +32,8 @@ repetitions = 100
 tot_events = iterations*repetitions
 
 data = np.genfromtxt('../data/wide_range_calibration.txt', skip_header=1, dtype="int")
+
+data.T[4:] = (data.T[4:]/16).astype(int)
 
 max_Voltage = data.T[4].max()
 print(max_Voltage)
@@ -129,7 +145,7 @@ plt.ylabel("ADC reading")
 
 plt.text(x=max_time-40, y=max_Voltage, s="Signal Amplitude [mV]")
 
-plt.savefig("../figures/decays.pdf", bbox_inches="tight")
+plt.savefig("../figures/decays2.pdf", bbox_inches="tight")
 plt.clf()
 
 print(Voltages)
@@ -139,23 +155,26 @@ def f(x):
     tck = interpolate.splrep(Voltages, A0)
     return interpolate.splev(x, tck)
 
-S0[0] = S0[0]/1000.
+#S0[0] = S0[0]/1000.
 fit = np.polyfit(x=Voltages, y=A0, deg=11, w=S0)
+print(fit)
 
 p = np.poly1d(fit)
 
 X = np.arange(0, max(Voltages), 0.5)
 Y = [p(x) for x in X]
 
-container = plt.errorbar(Voltages, A0, yerr=S0, fmt="o", markersize=1)
+container = plt.errorbar(Voltages, A0, yerr=S0, fmt="o", markersize=1, label="measured data", lw=0.5)
+plt.plot(X, Y, label="polynomial fit")
 #plt.scatter(Voltages, A0, c=color)
-plt.plot(X, Y)
 
-plt.yscale(value="log")
-plt.xlabel("Signal Peak Voltage [mV]")
-plt.ylabel("ADC Peak amplitude")
+#plt.yscale(value="log")
+plt.xlabel("Pulse amplitude [mV]")
+plt.ylabel("ADC reading [channel]")
 
 plt.ylim(bottom=1)
 plt.grid()
 
-plt.savefig("../figures/ADC_to_amplitude.pdf", bbox_inches="tight")
+plt.legend(loc="upper left")
+
+plt.savefig("../figures/ADC_to_amplitude2.pdf", bbox_inches="tight")
