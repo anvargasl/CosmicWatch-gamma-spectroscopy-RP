@@ -106,7 +106,7 @@ for p, prefix in enumerate(prefixes):
 
 	#background
 	#if not erase_bkgd:
-	#plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
+	#	plt.step(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, where='mid', label=prefix_bkgd, color=color_bkgd)
 	#plt.fill_between(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq-spectrum_bkgd.norm_freq_err, spectrum_bkgd.norm_freq+spectrum_bkgd.norm_freq_err, step='mid', alpha=0.5, color=color_bkgd)
 	#normalized histogram
 	plt.step(spectrum.bin_centers, spectrum.norm_freq, where='mid', label=r"{}".format(calibration["names"][prefix]), color=colors[prefix])
@@ -171,7 +171,7 @@ for p, prefix in enumerate(prefixes):
 	#plt.xlabel(r'SiPM pulse area ['+calibration["x_unit"]+']')
 	plt.xlabel(xlabel)
 	plt.ylabel(ylabel)
-	if not erase_bkgd: plt.yscale(value="log")
+	#if not erase_bkgd: plt.yscale(value="log")
 
 	plt.legend(loc="upper right")
 

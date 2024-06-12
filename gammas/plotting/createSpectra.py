@@ -198,7 +198,7 @@ for prefix in prefixes:
 	#ax.plot(np.arange(0,2**12, 8), spectrums[prefix].freq, label=r"{}".format(calibration["names"][prefix]), color=calibration["colors"][prefix], lw=1)
 	#axins.plot(np.arange(0,2**12), spectrums[prefix].freq, color=calibration["colors"][prefix], lw=1)
 
-#plt.plot(spectrum_bkgd.bin_centers, spectrum_bkgd.norm_freq, label=prefix_bkgd, alpha=0.3)
+#plt.plot(spectrum_bkgd.bin_centers, spectrum_bkgd.freq, label=prefix_bkgd, color=calibration["color_bkgd"], lw=1)
 
 #print(spectrums["22Na"].norm_freq)
 #Na22_array = spectrums["22Na"].norm_freq[np.nonzero(spectrums["22Na"].norm_freq > 0)]
@@ -209,13 +209,13 @@ for prefix in prefixes:
 
 #plt.plot(x_values, Na22_array, label="non zero channels")
 
-ax.set_title("RaspberryPi Pico, 12-bit ADC output")
+ax.set_title("RaspberryPi Pico")
 ax.set_xlabel("ADC reading [cahnnel]")
 ax.set_ylabel(r"$I$ [counts]")
 
 major_grid = 500
 minor_grid = 100
-channel_lims = [0, 2**12]
+channel_lims = [0, 2000]
 ax.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, major_grid))
 ax.set_xticks(np.arange(channel_lims[0], channel_lims[1]+1, minor_grid), minor=True)
 

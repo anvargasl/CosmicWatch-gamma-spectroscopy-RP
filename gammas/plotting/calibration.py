@@ -26,15 +26,18 @@ data_folder = "PICO/"+integration
 config = 	{"october-13-2023-high-energies/": "teflon-side-",
 		  "2024-04-30/": "test_600s_",
 		  "2024-05-22/": "1800s_",
-		  "2024-05-24/"+integration: ""}
+		  "2024-05-24/"+integration: "",
+		  "PICO/": ""}
 config_bkgd = 	{"october-13-2023-high-energies/": "teflon-",
 		  		"2024-04-30/": "test_600s_",
 				"2024-05-22/": "1800s_",
-		  		"2024-05-24/"+integration: ""}
+		  		"2024-05-24/"+integration: "",
+				"PICO/": ""}
 data_type = {"october-13-2023-high-energies/": "RTO6",
 		  	"2024-04-30/": "NIM",
 			"2024-05-22/": "NIM",
-		  	"2024-05-24/"+integration: "NIM"}
+		  	"2024-05-24/"+integration: "NIM",
+			"PICO/": "PICO"}
 
 with open("../data/"+data_folder+spectra_folder+"calibration.json", "r") as infile:
     calibration = json.load(infile)
@@ -75,7 +78,20 @@ elif data_type[data_folder] == "NIM":
 			calib_title = "differentiate time = "+integration[:-2]+" ns"
 		E_lims = [0, 1650]
 		major_dE = 100
-		minor_dE = 25		
+		minor_dE = 25	
+
+elif data_type[data_folder] == "PICO":
+
+	a1_units = r") [keV/ch] $\cdot$channel"
+	s1_units = r") [keV$^{1/2}$] $\sqrt{E}$"
+
+	calib_x_units = r'channel [ch]'
+
+	calib_title = "RaspberryPi Pico"
+
+	E_lims = [-1000, 2000]
+	major_dE = 500
+	minor_dE = 100
 
 #list of isotopes
 prefixes = calibration["prefixes"]
@@ -169,7 +185,7 @@ for prefix in prefixes:
 	#read spectra
 	spectrum = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
 
-	plt.step(X, spectrum.norm_freq, where='mid', label=prefix, color=colors[prefix])
+	plt.step(X, spectrum.norm_freq+spectrum_bkgd.norm_freq, where='mid', label=prefix, color=colors[prefix])
 	#error bars in event count
 	#plt.fill_between(X, spectrum.norm_freq-spectrum.norm_freq_err, spectrum.norm_freq+spectrum.norm_freq_err, step='mid', alpha=0.5, color=color_tab[prefix])
 
@@ -215,6 +231,9 @@ plt.ylabel(r'$I/I_{max}$')
 
 plt.yscale(value='log')
 plt.legend(loc="lower left", ncols=2)
+if data_type[data_folder] == "PICO":
+	plt.yscale(value='linear')
+	plt.legend(loc="upper right", ncols=2)
 if data_type[data_folder] == "RTO6":
 	if calibration["peak_dict"]["Cs137"]["31 keV"]["fit?"]:
 		plt.savefig("../figures/"+data_folder+"Calibrated_spectrum_low_peaks.pdf", bbox_inches="tight")
