@@ -1,4 +1,5 @@
 #RingbufQueue
+#Addapted from ringbuf_queue.py by peterhinch (Copyright (c) 2016 Peter Hinch)
 
 import _thread
 from utime import sleep_ms
@@ -32,8 +33,7 @@ class RingbufQueue:
         #self._evget.clear()
         return r'''
 
-    def peek(self):  # Return oldest item from the queue without removing it.
-        # Return an item if one is immediately available, else raise QueueEmpty.
+    def peek(self): #return oldest item from the queue without removing it
         if self.empty():
             print("peeking on empty buffer")
             raise IndexError
@@ -55,12 +55,12 @@ class RingbufQueue:
 
     def put(self, val): #put an item in the buffer
         full = 0
-        if self.full(): # check if the buffer is full
+        if self.full(): #check if the buffer is full
             full = 1
-            while not self.empty(): # Wait until buffer is empty
+            while not self.empty(): #wait until buffer is empty
                 print("core 0 sleeping for 1s because full")
                 sleep_ms(1000)
-                val[-1] += 1000 # Increase dead time
+                val[-1] += 1000 #increase dead time
             
         if full: print("I was full, buffer emptied")
         '''dead_t = self.put_nowait(val)'''
@@ -68,32 +68,31 @@ class RingbufQueue:
         self._wi = (self._wi + 1) % self._size
         return val[-1]
 
+    #allowing the use of a wait routine while data is saved, this is adapted to use "update_OLED" as wait routine
     def get(self, wait_routine=None, args=None): #read available events
         r = None
         
         while self.empty():
             if wait_routine: #use the wait routine
-                #print("Hello:",args)
                 args[0], args[1] = wait_routine(*args)
             elif not self._complete: #check if the measurement is complete
-                #print("empty buffer, waiting")
+                print("empty buffer, waiting")
                 sleep_ms(10) #give the reader some time to acquire events
             elif self._complete:
                 return [[None]] #stop saving
         
         t_wi = self._wi
-        #r = self._q[self._ri]
         q_size = self.qsize()
         
         if q_size > self._max_q_size:
             t_wi = (self._ri+self._max_q_size) % self._size
-            print("big buffer "+str(q_size))
+            print("big buffer, "+str(q_size)+" unread events")
         else:
             t_wi = self._wi
         
         if t_wi > self._ri:
             r = self._q[self._ri:t_wi]
-        else: # circle around de ring
+        else: #circle around de ring
             r = self._q[self._ri:]+self._q[:t_wi]
         #self._ri = (self._ri + 1) % self._size
         self._ri = t_wi

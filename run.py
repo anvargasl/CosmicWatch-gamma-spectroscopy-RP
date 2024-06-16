@@ -14,7 +14,6 @@ import sdcard
 
 #modules
 import OLED
-#import sd_module
 import RingbufQueue
 
 #detector name
@@ -23,7 +22,7 @@ role = "M"
 
 #Coincidence pins
 COINCIDENCE = None
-coincident_= signal_input_pin  = None
+coincident_signal_input_pin  = None
 coincident_signal_output_pin = None
 
 #ADC pins
@@ -43,8 +42,10 @@ pix_res_y = 64
 
 #buffer to save data
 buffer_size = 200
-buffer = RingbufQueue.RingbufQueue(buffer_size)
-tot_events = 6000
+#saving: [time string]+[event count, Pico time, adc]+[Temperature, Pressure]+[dead time]
+event_type = [str]+[int]*4+[float]*2+[int]
+buffer = RingbufQueue.RingbufQueue(buffer_size, event_type)
+tot_events = 10000
 t1_e_count = 0
 rate = 0
 
@@ -64,7 +65,7 @@ def CoincidentMode():
     coincident_pin_1 = machine.Pin(19, machine.Pin.IN)
     coincident_pin_2 = None
     
-    #if someone is talking to me in channel 1, then talk in chanel 2
+    #if someone is talking to me in channel 1, then talk in channel 2
     print(coincident_pin_1.value())
     if coincident_pin_1.value():
         coincident_pin_2 = machine.Pin(20, machine.Pin.OUT)
@@ -79,11 +80,10 @@ def CoincidentMode():
         s_LED.off()
         coincident_pin_2.off()
         
-        COINCIDENCE = True #Another detector observed
+        COINCIDENCE = True #another detector found
         #filename[4] = ‘C’;
         print("Coincidence detector found, "+name+" is slave")
         role = "S"
-        #utime.sleep_ms(2000)
         
         return
 
@@ -91,7 +91,7 @@ def CoincidentMode():
         coincident_pin_1 = machine.Pin(19, machine.Pin.OUT)
         coincident_pin_1.on()
         coincident_pin_2 = machine.Pin(20, machine.Pin.IN)
-        #filename[4] = ‘M’; // Label the filename as “M”aster
+        #filename[4] = ‘M’ #Label the filename as “M”aster
         utime.sleep_ms(1000)
         for i in range(0,101):
             print(name+" waiting")
@@ -108,7 +108,7 @@ def CoincidentMode():
                 coincident_pin_1.off()
 
                 COINCIDENCE = True # Another detector observed
-                #filename[4] = ‘C’;  // Label the filename as “C”oincidence
+                #filename[4] = ‘C’ #Label the filename as “C”oincidence
                 print("Coincidence detector found, "+name+" is master")
                 
                 return
@@ -135,7 +135,6 @@ OLED.display_logo(oled) #Login screen
 
 #showing elapsed time
 OLED.display_text(oled, line=0, text="Thread:"+str(oled_id))
-#OLED.display_text(oled, line=0, start=58, text=str(oled_id))
 OLED.display_text(oled, line=0, start=70, text="Role:"+role)
 OLED.display_text(oled, line=1, text="Uptime:")
 OLED.display_text(oled, line=2, text="Count:")

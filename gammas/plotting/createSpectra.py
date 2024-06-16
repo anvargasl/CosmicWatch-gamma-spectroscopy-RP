@@ -259,5 +259,5 @@ x1, x2, y1, y2 = 1000, 1048, -100, 700
 #ax.indicate_inset_zoom(axins, edgecolor="black")
 #mark_inset(ax, axins, loc1=2, loc2=4, fc="none", ec="0.5")
 #if not erase_bkgd: plt.yscale(value='log')
-plt.show()
-#plt.savefig("../figures/"+data_folder+"8channel_bins.pdf", bbox_inches="tight")
+#plt.show()
+plt.savefig("../figures/"+data_folder+"8channel_bins.pdf", bbox_inches="tight")

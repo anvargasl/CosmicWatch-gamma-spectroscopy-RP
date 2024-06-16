@@ -46,9 +46,8 @@ def display_logo(oled):
     oled.fill(0) #clear screen
 
 def display_text(oled, line, start=margin, text="Raspberry Pi"):
-    # Display text on the OLED
+    #display text on the OLED
     oled.text(text, start, margin+line*(font_height+spacing))
-    #oled.text("Pico", 5, 15)
     oled.show()
     
 def erase_line(oled, line, start=margin, end=pix_res_x-margin):
@@ -65,7 +64,7 @@ def erase_lines(oled, lines=[0,1], start=margin, end=pix_res_x-margin):
     oled.show()
     
 def display_timer(oled):
-    # Display a simple timer animation on the OLED
+    #display a simple timer animation on the OLED
     
     text_y = oled.height-font_height-margin
     width = oled.width-2*margin
@@ -84,7 +83,7 @@ def display_timer(oled):
         utime.sleep_ms(1000)
              
 def display_counter(oled):
-    # Display a simple even number counter animation on the OLED
+    #display a simple even number counter animation on the OLED
     text_y = oled.height-font_height-margin
     width = oled.width-2*margin
     
@@ -94,7 +93,7 @@ def display_counter(oled):
     
     counter = 0
     while True:
-        # Clear the specific line by drawing a filled black rectangle
+        #clear the specific line by drawing a filled black rectangle
         erase(margin, text_y, width, font_height, 0)
         write("counter:", margin, text_y-font_height-spacing)
         write(str(counter), margin, text_y)

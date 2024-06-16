@@ -13,9 +13,9 @@
     "make_histogram": 1,
     "prefixes": [
         "54Mn_1",
-        "54Mn_2",
-        "54Mn",
-        "88Y"
+        "88Y_1",
+        "22Na",
+        "137Cs"
     ],
     "prefix_bkgd": "bkgd",
     "names": {
