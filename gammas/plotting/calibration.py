@@ -1,7 +1,7 @@
 import matplotlib as mpl
 
 fsize = 12
-mpl.rcParams['legend.fontsize'] = fsize-2
+mpl.rcParams['legend.fontsize'] = fsize
 mpl.rcParams["figure.figsize"] = (10,5)
 mpl.rcParams['axes.labelsize'] = fsize
 mpl.rcParams['xtick.labelsize'] = fsize
@@ -19,9 +19,9 @@ import json
 import histogram_class as hmc
 from uncertainty import my_uncertainty
 
-integration = ""
+integration = "outD/"
 spectra_folder = "spectra/"
-data_folder = "PICO/"+integration
+data_folder = "2024-05-24/"+integration
 
 config = 	{"october-13-2023-high-energies/": "teflon-side-",
 		  "2024-04-30/": "test_600s_",
@@ -185,7 +185,7 @@ for prefix in prefixes:
 	#read spectra
 	spectrum = hmc.Histogram(f_name='../data/'+data_folder+spectra_folder+prefix+'_spectrum.txt')
 
-	plt.step(X, spectrum.norm_freq+spectrum_bkgd.norm_freq, where='mid', label=prefix, color=colors[prefix])
+	plt.step(X, spectrum.norm_freq+spectrum_bkgd.norm_freq, where='mid', label=calibration["names"][prefix], color=colors[prefix])
 	#error bars in event count
 	#plt.fill_between(X, spectrum.norm_freq-spectrum.norm_freq_err, spectrum.norm_freq+spectrum.norm_freq_err, step='mid', alpha=0.5, color=color_tab[prefix])
 
